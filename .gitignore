@@ -1,0 +1,19 @@
+# Datos personales y de seguridad de MILLER (incluye la llave PRO y su estado): nunca se suben
+datos/
+
+# Generados por PyInstaller y caché de Python
+dist/
+build/
+__pycache__/
+*.pyc
+
+# Caché de graphify (regenerable)
+graphify-out/cache/
+
+# Modelos, voces y ffmpeg: son descargables y pesan demasiado para git.
+# Se bajan con:  python principal.py --instalar   (utilidades/instalador.py, solo desde URLs fijas)
+modelos/
+
+# Canciones: son material con derechos de autor y el repositorio es público.
+# Las pone cada usuario en su carpeta audios/ local.
+audios/

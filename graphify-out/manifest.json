@@ -1,0 +1,878 @@
+{
+  "audio/atenuador.py": {
+    "mtime": 1794069725.3800385,
+    "seen": 1794179275.4703107,
+    "ast_hash": "0f527b3f81aec51a31cc05be6dcc6ab1",
+    "semantic_hash": ""
+  },
+  "audio/fade_controller.py": {
+    "mtime": 1794037101.0688257,
+    "seen": 1794179275.4703193,
+    "ast_hash": "95a098146bcb4932a1460056a9b45a1d",
+    "semantic_hash": ""
+  },
+  "audio/reproductor.py": {
+    "mtime": 1794169676.289679,
+    "seen": 1794179275.4703228,
+    "ast_hash": "2486a9d730ec739ec6e50bad68108576",
+    "semantic_hash": ""
+  },
+  "audio/supervisor_biblioteca.py": {
+    "mtime": 1794061426.6541193,
+    "seen": 1794179275.4703252,
+    "ast_hash": "6aff699d567980f1c9e29f521933c8bd",
+    "semantic_hash": ""
+  },
+  "cerebro/__init__.py": {
+    "mtime": 1794037121.4446764,
+    "seen": 1794179275.4703271,
+    "ast_hash": "5eaae6e8f0cffb30cc3126944f28bb3b",
+    "semantic_hash": ""
+  },
+  "cerebro/cerebro.py": {
+    "mtime": 1794177793.3135834,
+    "seen": 1794179275.4703283,
+    "ast_hash": "178398c61cc5f43d39d4c531df8c587b",
+    "semantic_hash": ""
+  },
+  "cerebro/comandos.py": {
+    "mtime": 1794174458.8171494,
+    "seen": 1794179275.4703298,
+    "ast_hash": "b5d86705dbb75242964633bcdc20817d",
+    "semantic_hash": ""
+  },
+  "cerebro/conexiones.py": {
+    "mtime": 1794177760.1254163,
+    "seen": 1794179275.470331,
+    "ast_hash": "747b4eaaa8c15b75fc0af6ae8552fb26",
+    "semantic_hash": ""
+  },
+  "cerebro/contexto_ordenes.py": {
+    "mtime": 1794089652.6608713,
+    "seen": 1794179275.4703321,
+    "ast_hash": "b3a7bb66c0d6a44835fec0cb2d072947",
+    "semantic_hash": ""
+  },
+  "cerebro/emociones.py": {
+    "mtime": 1794089561.8196385,
+    "seen": 1794179275.4703333,
+    "ast_hash": "0c56e0f04cc961fa4e28e8f3dd1ddef9",
+    "semantic_hash": ""
+  },
+  "cerebro/iniciativa.py": {
+    "mtime": 1794177793.3403287,
+    "seen": 1794179275.4703348,
+    "ast_hash": "10887e54ecd85b38ccaa27cffb19f686",
+    "semantic_hash": ""
+  },
+  "cerebro/memoria.py": {
+    "mtime": 1794177785.0577312,
+    "seen": 1794179275.4703364,
+    "ast_hash": "53c0119d0e8051ebca6a5d411b476f99",
+    "semantic_hash": ""
+  },
+  "cerebro/necesidades.py": {
+    "mtime": 1794089240.6900322,
+    "seen": 1794179275.4703379,
+    "ast_hash": "dfd919dc1616fb780a9e9fcaf158bdd1",
+    "semantic_hash": ""
+  },
+  "cerebro/patrones.py": {
+    "mtime": 1794084561.3105583,
+    "seen": 1794179275.4703388,
+    "ast_hash": "584b283f71b0b38000b257538d4b80da",
+    "semantic_hash": ""
+  },
+  "configuracion.py": {
+    "mtime": 1794177737.2192104,
+    "seen": 1794179275.47034,
+    "ast_hash": "45e39fdd9b715cdb0661c1f2a28d4237",
+    "semantic_hash": ""
+  },
+  "datos/seguridad/acceso.json": {
+    "mtime": 1794171693.98144,
+    "seen": 1794179275.4703412,
+    "ast_hash": "5af13e75ec7228b22af8085bfd22d5f0",
+    "semantic_hash": ""
+  },
+  "datos/seguridad/integridad.json": {
+    "mtime": 1794160124.6988232,
+    "seen": 1794179275.4703422,
+    "ast_hash": "06ad1517f9999973b940cb9a4f8fc809",
+    "semantic_hash": ""
+  },
+  "interfaz/__init__.py": {
+    "mtime": 1794040597.1588826,
+    "seen": 1794179275.4703434,
+    "ast_hash": "5599a905fe2f36c6dad88d4f66fef3dd",
+    "semantic_hash": ""
+  },
+  "interfaz/esencia.py": {
+    "mtime": 1794177213.6508584,
+    "seen": 1794179275.4703448,
+    "ast_hash": "b04b177e6279ef7244553d90f5abf3a5",
+    "semantic_hash": ""
+  },
+  "interfaz/frases.py": {
+    "mtime": 1794080543.7017174,
+    "seen": 1794179275.470346,
+    "ast_hash": "8785a64720a1fcb132196299617e840a",
+    "semantic_hash": ""
+  },
+  "interfaz/panel.py": {
+    "mtime": 1794172572.953177,
+    "seen": 1794179275.470347,
+    "ast_hash": "46c30d7e72ddd804c55dba81492c6c8f",
+    "semantic_hash": ""
+  },
+  "interfaz/pensamiento.py": {
+    "mtime": 1794149664.4467795,
+    "seen": 1794179275.4703484,
+    "ast_hash": "7f18eee98df650f061578d6c9548c820",
+    "semantic_hash": ""
+  },
+  "modelos/voces/es_ES-davefx-medium/es_ES-davefx-medium.onnx.json": {
+    "mtime": 1794038974.2021053,
+    "seen": 1794179275.47035,
+    "ast_hash": "dd157b5eaf6930bf949cf416d9a9307a",
+    "semantic_hash": ""
+  },
+  "principal.py": {
+    "mtime": 1794177213.6693106,
+    "seen": 1794179275.4703512,
+    "ast_hash": "940b073347641c51e6a440b812816613",
+    "semantic_hash": ""
+  },
+  "test/ayuda_llave_boy.py": {
+    "mtime": 1794171094.6569645,
+    "seen": 1794179275.4703524,
+    "ast_hash": "70aaeb5771ad10360bb27a68f350f0c7",
+    "semantic_hash": ""
+  },
+  "test/probar_acceso.py": {
+    "mtime": 1794177919.5784957,
+    "seen": 1794179275.4703534,
+    "ast_hash": "eea62680cb6bdfc7d1325d950bcd1d80",
+    "semantic_hash": ""
+  },
+  "test/probar_activador.py": {
+    "mtime": 1794037101.601363,
+    "seen": 1794179275.4703548,
+    "ast_hash": "3062478161530dd8165b136309c44447",
+    "semantic_hash": ""
+  },
+  "test/probar_atenuador.py": {
+    "mtime": 1794069725.384548,
+    "seen": 1794179275.4703557,
+    "ast_hash": "4126f55706b88fce69f78d0211821030",
+    "semantic_hash": ""
+  },
+  "test/probar_autonomia.py": {
+    "mtime": 1794076270.2551343,
+    "seen": 1794179275.4703567,
+    "ast_hash": "ccf827228cc2f3f76948e1fca0e85ecf",
+    "semantic_hash": ""
+  },
+  "test/probar_bienvenida.py": {
+    "mtime": 1794164535.7231615,
+    "seen": 1794179275.4703581,
+    "ast_hash": "e56a7a20a1a2fc6ddf1bbad0659ca3e8",
+    "semantic_hash": ""
+  },
+  "test/probar_catalogo.py": {
+    "mtime": 1794173976.4496598,
+    "seen": 1794179275.470359,
+    "ast_hash": "52f84653db91246551e643bdc0a28ef4",
+    "semantic_hash": ""
+  },
+  "test/probar_cerebro.py": {
+    "mtime": 1794037101.6207058,
+    "seen": 1794179275.47036,
+    "ast_hash": "df6b5190e997df28d4e31732a85653a3",
+    "semantic_hash": ""
+  },
+  "test/probar_cola_terminal.py": {
+    "mtime": 1794167945.3473752,
+    "seen": 1794179275.4703612,
+    "ast_hash": "39e455110068c961f8218c20f89e645d",
+    "semantic_hash": ""
+  },
+  "test/probar_conexiones.py": {
+    "mtime": 1794171296.744458,
+    "seen": 1794179275.4703624,
+    "ast_hash": "4bdde975bf3bcef0f8bc3f13ad3b18ee",
+    "semantic_hash": ""
+  },
+  "test/probar_conversacion.py": {
+    "mtime": 1794036918.2512076,
+    "seen": 1794179275.4703636,
+    "ast_hash": "07caeb47e109a5ff123c2b0aa9477883",
+    "semantic_hash": ""
+  },
+  "test/probar_descarga.py": {
+    "mtime": 1794037101.6335225,
+    "seen": 1794179275.4703646,
+    "ast_hash": "4e5bbe11ee63d7249a4ff9e72c5e032d",
+    "semantic_hash": ""
+  },
+  "test/probar_disco_memoria.py": {
+    "mtime": 1794177912.117274,
+    "seen": 1794179275.470366,
+    "ast_hash": "02489e45653812e37956bb7cd943e09e",
+    "semantic_hash": ""
+  },
+  "test/probar_ecualizador.py": {
+    "mtime": 1794155184.1030886,
+    "seen": 1794179275.470367,
+    "ast_hash": "a13e3548443433f9008e9a6ca64c7cb2",
+    "semantic_hash": ""
+  },
+  "test/probar_ecualizador_perfiles.py": {
+    "mtime": 1794148870.0871446,
+    "seen": 1794179275.4703681,
+    "ast_hash": "146e98d1ddbc04e1b85153dfcf6f8bc9",
+    "semantic_hash": ""
+  },
+  "test/probar_emociones.py": {
+    "mtime": 1794037101.6492095,
+    "seen": 1794179275.4703693,
+    "ast_hash": "1abecfffa663e600f8f9931df0872f5c",
+    "semantic_hash": ""
+  },
+  "test/probar_equilibrio.py": {
+    "mtime": 1794084697.38034,
+    "seen": 1794179275.4703705,
+    "ast_hash": "6c90746ba8096a9ed600414682932f0a",
+    "semantic_hash": ""
+  },
+  "test/probar_escuchador.py": {
+    "mtime": 1794037101.657771,
+    "seen": 1794179275.4703715,
+    "ast_hash": "9c50352e5fcd8efb668edde04911db4d",
+    "semantic_hash": ""
+  },
+  "test/probar_iniciativa.py": {
+    "mtime": 1794037101.6659813,
+    "seen": 1794179275.470373,
+    "ast_hash": "7e6c4e6103b9ee1f12bc0087b625c34b",
+    "semantic_hash": ""
+  },
+  "test/probar_inicio_musica.py": {
+    "mtime": 1794079259.1542723,
+    "seen": 1794179275.4703743,
+    "ast_hash": "427cd009b2dfeb7ad7df84667f5147df",
+    "semantic_hash": ""
+  },
+  "test/probar_instalador.py": {
+    "mtime": 1794069747.5527046,
+    "seen": 1794179275.4703758,
+    "ast_hash": "e92144f4914febf10cb5207edc05bbc8",
+    "semantic_hash": ""
+  },
+  "test/probar_internet.py": {
+    "mtime": 1794037101.682519,
+    "seen": 1794179275.470377,
+    "ast_hash": "bb321a0007c599fe96400de8e0853981",
+    "semantic_hash": ""
+  },
+  "test/probar_memoria.py": {
+    "mtime": 1794037101.6917024,
+    "seen": 1794179275.470378,
+    "ast_hash": "783043735300c94d467b682e6fcbc6a1",
+    "semantic_hash": ""
+  },
+  "test/probar_memoria_olvido.py": {
+    "mtime": 1794149175.507609,
+    "seen": 1794179275.4703794,
+    "ast_hash": "1deda6d8153328c6de9947397fd03c8d",
+    "semantic_hash": ""
+  },
+  "test/probar_modelo_vosk.py": {
+    "mtime": 1794037101.7008924,
+    "seen": 1794179275.4703805,
+    "ast_hash": "c14ec26978848137cb2e162be299e0c0",
+    "semantic_hash": ""
+  },
+  "test/probar_niveles.py": {
+    "mtime": 1794171094.669867,
+    "seen": 1794179275.4703815,
+    "ast_hash": "51768522ee32c5b84041233a371c6c7c",
+    "semantic_hash": ""
+  },
+  "test/probar_nombre.py": {
+    "mtime": 1794162482.1624072,
+    "seen": 1794179275.4703827,
+    "ast_hash": "e517e40f0936df2b154ad5d8c9459ff4",
+    "semantic_hash": ""
+  },
+  "test/probar_ordenes.py": {
+    "mtime": 1794061450.595352,
+    "seen": 1794179275.4703841,
+    "ast_hash": "e8b2e719ca6135372edce39fbaa942b1",
+    "semantic_hash": ""
+  },
+  "test/probar_panel_llaves.py": {
+    "mtime": 1794171094.701009,
+    "seen": 1794179275.470385,
+    "ast_hash": "811ba95d34def27b5b5bc844c2384ddb",
+    "semantic_hash": ""
+  },
+  "test/probar_papelera.py": {
+    "mtime": 1794037101.7244842,
+    "seen": 1794179275.4703865,
+    "ast_hash": "e6a86e6110431f7539d76ddf773825ef",
+    "semantic_hash": ""
+  },
+  "test/probar_pensamiento.py": {
+    "mtime": 1794149447.9451036,
+    "seen": 1794179275.4703877,
+    "ast_hash": "2e8d3537bd0169218baf3796f6ba4ffe",
+    "semantic_hash": ""
+  },
+  "test/probar_programas.py": {
+    "mtime": 1794037101.7355218,
+    "seen": 1794179275.470389,
+    "ast_hash": "ba250b4a00b1b6c58f1244aeb8788101",
+    "semantic_hash": ""
+  },
+  "test/probar_purga.py": {
+    "mtime": 1794159196.277232,
+    "seen": 1794179275.47039,
+    "ast_hash": "54cb17c90b35cd05930faf4fa57ff2c2",
+    "semantic_hash": ""
+  },
+  "test/probar_quitar_cola.py": {
+    "mtime": 1794177131.7855964,
+    "seen": 1794179275.4703913,
+    "ast_hash": "dd4b631410f3ceecfdb677a9babcdaea",
+    "semantic_hash": ""
+  },
+  "test/probar_rendimiento.py": {
+    "mtime": 1794068765.53189,
+    "seen": 1794179275.4703925,
+    "ast_hash": "03b43d015eb4ec02177a9e311a149d1a",
+    "semantic_hash": ""
+  },
+  "test/probar_reproductor.py": {
+    "mtime": 1794081216.2198784,
+    "seen": 1794179275.470394,
+    "ast_hash": "bdb1b10315679c0956a769c666b1e67a",
+    "semantic_hash": ""
+  },
+  "test/probar_seguridad.py": {
+    "mtime": 1794036917.9345448,
+    "seen": 1794179275.470395,
+    "ast_hash": "f43bcf1a25c64ff5e9508f0b81a3fcfe",
+    "semantic_hash": ""
+  },
+  "test/probar_sellar.py": {
+    "mtime": 1794162482.1773014,
+    "seen": 1794179275.4703965,
+    "ast_hash": "f09bafa95c1a87872db07c3d72dd84b6",
+    "semantic_hash": ""
+  },
+  "test/probar_sinonimos.py": {
+    "mtime": 1794148994.1605844,
+    "seen": 1794179275.4703975,
+    "ast_hash": "1602824d04e33a31f633ba55d2ce7851",
+    "semantic_hash": ""
+  },
+  "test/probar_supervisor.py": {
+    "mtime": 1794037101.7884421,
+    "seen": 1794179275.4703987,
+    "ast_hash": "9bd572613d84e341cd0e555112723d9a",
+    "semantic_hash": ""
+  },
+  "test/probar_tecnico.py": {
+    "mtime": 1794155184.1030886,
+    "seen": 1794179275.4703999,
+    "ast_hash": "7b0bd5356b7352c6dc850dee4a9a9792",
+    "semantic_hash": ""
+  },
+  "test/probar_ventanas.py": {
+    "mtime": 1794149038.127,
+    "seen": 1794179275.470401,
+    "ast_hash": "4889067df17450f0f3bf94675a3fca7b",
+    "semantic_hash": ""
+  },
+  "test/probar_voces.py": {
+    "mtime": 1794076153.522356,
+    "seen": 1794179275.470402,
+    "ast_hash": "37da87121498da4ffa9b30507ec4a9de",
+    "semantic_hash": ""
+  },
+  "test/probar_volumen.py": {
+    "mtime": 1794037101.7988997,
+    "seen": 1794179275.470403,
+    "ast_hash": "ad354c8685bf8cc4e805f508961de1cf",
+    "semantic_hash": ""
+  },
+  "test/probar_vosk.py": {
+    "mtime": 1794037101.8059013,
+    "seen": 1794179275.4704044,
+    "ast_hash": "d835c8308852e43ad01d93d1a412b582",
+    "semantic_hash": ""
+  },
+  "test/probar_voz.py": {
+    "mtime": 1794037101.811901,
+    "seen": 1794179275.4704053,
+    "ast_hash": "d661d51d49616a2018279932f381fc7e",
+    "semantic_hash": ""
+  },
+  "test/probar_voz_multiple.py": {
+    "mtime": 1794037101.8160863,
+    "seen": 1794179275.4704068,
+    "ast_hash": "ee15949babd8093776b9e09be66927e5",
+    "semantic_hash": ""
+  },
+  "utilidades/acceso.py": {
+    "mtime": 1794171027.7352514,
+    "seen": 1794179275.4704077,
+    "ast_hash": "65baca9a3318754dc0d7d4e8704e265d",
+    "semantic_hash": ""
+  },
+  "utilidades/alarmas.py": {
+    "mtime": 1794089691.8017552,
+    "seen": 1794179275.4704087,
+    "ast_hash": "4423fd272a135a653faa6a034d93dbfb",
+    "semantic_hash": ""
+  },
+  "utilidades/bateria.py": {
+    "mtime": 1794087540.0410395,
+    "seen": 1794179275.4704099,
+    "ast_hash": "ce65099d74ba04291f33b0391c36c768",
+    "semantic_hash": ""
+  },
+  "utilidades/calculadora.py": {
+    "mtime": 1794061299.241887,
+    "seen": 1794179275.4704113,
+    "ast_hash": "453607ee040611f2327b4bb16e7f34ba",
+    "semantic_hash": ""
+  },
+  "utilidades/catalogo.py": {
+    "mtime": 1794173967.746303,
+    "seen": 1794179275.4704123,
+    "ast_hash": "c9d7b991bc1e2725e31cd03adb4bc1b5",
+    "semantic_hash": ""
+  },
+  "utilidades/clima.py": {
+    "mtime": 1794037101.834211,
+    "seen": 1794179275.4704132,
+    "ast_hash": "3b49e02af9956b584773d41df8556de4",
+    "semantic_hash": ""
+  },
+  "utilidades/consulta_internet.py": {
+    "mtime": 1794037101.8529086,
+    "seen": 1794179275.4704146,
+    "ast_hash": "8d7db54d95f37df1b90057a5c1fca4ae",
+    "semantic_hash": ""
+  },
+  "utilidades/cuota.py": {
+    "mtime": 1794177912.1005926,
+    "seen": 1794179275.4704156,
+    "ast_hash": "3c9402ed08c257e40e71090cd53d0a47",
+    "semantic_hash": ""
+  },
+  "utilidades/descargar_musica.py": {
+    "mtime": 1794040442.3281786,
+    "seen": 1794179275.4704168,
+    "ast_hash": "11edf80f8c88ab7ba764785d48087388",
+    "semantic_hash": ""
+  },
+  "utilidades/ecualizador.py": {
+    "mtime": 1794153526.4356134,
+    "seen": 1794179275.4704182,
+    "ast_hash": "c7c71e28ac29e0940cd97f49a53a40d7",
+    "semantic_hash": ""
+  },
+  "utilidades/entorno.py": {
+    "mtime": 1794076023.5078416,
+    "seen": 1794179275.4704194,
+    "ast_hash": "2883bf2b31d9a37c84dbd2a9e3d59963",
+    "semantic_hash": ""
+  },
+  "utilidades/instalador.py": {
+    "mtime": 1794069770.7371676,
+    "seen": 1794179275.4704206,
+    "ast_hash": "333127031a55e0880abf2ebc8c0d5b9e",
+    "semantic_hash": ""
+  },
+  "utilidades/llave_boy.py": {
+    "mtime": 1794172546.3269393,
+    "seen": 1794179275.4704218,
+    "ast_hash": "724ecfabac6bdec4daf15c7c9a0285e4",
+    "semantic_hash": ""
+  },
+  "utilidades/navegacion.py": {
+    "mtime": 1794075981.950166,
+    "seen": 1794179275.470423,
+    "ast_hash": "fc6be5db7a508953153ed3aeac153d14",
+    "semantic_hash": ""
+  },
+  "utilidades/nombre.py": {
+    "mtime": 1794164490.8649602,
+    "seen": 1794179275.4704242,
+    "ast_hash": "4446e029d1da87a13569fe9453aa449f",
+    "semantic_hash": ""
+  },
+  "utilidades/noticias.py": {
+    "mtime": 1794068733.3396096,
+    "seen": 1794179275.470426,
+    "ast_hash": "e046d964d5078e4907f19f866f53f785",
+    "semantic_hash": ""
+  },
+  "utilidades/numeros.py": {
+    "mtime": 1794061298.7359557,
+    "seen": 1794179275.4704273,
+    "ast_hash": "40982166ea4034eaa4deb426651bbaa9",
+    "semantic_hash": ""
+  },
+  "utilidades/probador.py": {
+    "mtime": 1794040442.361591,
+    "seen": 1794179275.4704287,
+    "ast_hash": "57f60661217588c29911a7c1ca4d6816",
+    "semantic_hash": ""
+  },
+  "utilidades/purga.py": {
+    "mtime": 1794162414.1358366,
+    "seen": 1794179275.47043,
+    "ast_hash": "c6218c07b7438c8f224759dc48e06b2c",
+    "semantic_hash": ""
+  },
+  "utilidades/reloj.py": {
+    "mtime": 1794089296.0778756,
+    "seen": 1794179275.470431,
+    "ast_hash": "fd0197039e5626797a84b684610b534b",
+    "semantic_hash": ""
+  },
+  "utilidades/rutina.py": {
+    "mtime": 1794089719.9511454,
+    "seen": 1794179275.4704323,
+    "ast_hash": "350bbc9f842e191a29ab6f442566de8e",
+    "semantic_hash": ""
+  },
+  "utilidades/seguridad.py": {
+    "mtime": 1794141535.3738618,
+    "seen": 1794179275.4704332,
+    "ast_hash": "5c6d414f1eca65ecedafd16e296174d3",
+    "semantic_hash": ""
+  },
+  "utilidades/sistema.py": {
+    "mtime": 1794141535.3882074,
+    "seen": 1794179275.4704347,
+    "ast_hash": "7294db4d87503c5589fb142f18931d1e",
+    "semantic_hash": ""
+  },
+  "utilidades/ventanas.py": {
+    "mtime": 1794089412.0273032,
+    "seen": 1794179275.4704356,
+    "ast_hash": "10e21fa67601653d0fa52788613b3d38",
+    "semantic_hash": ""
+  },
+  "voz/__init__.py": {
+    "mtime": 1794037102.0013545,
+    "seen": 1794179275.4704366,
+    "ast_hash": "b21eab606b4f17722a4138c13522a645",
+    "semantic_hash": ""
+  },
+  "voz/activador.py": {
+    "mtime": 1794162414.1500688,
+    "seen": 1794179275.4704382,
+    "ast_hash": "93f101fe0102d3458f4b56f8e4d60682",
+    "semantic_hash": ""
+  },
+  "voz/conversacion.py": {
+    "mtime": 1794037102.0428414,
+    "seen": 1794179275.4704394,
+    "ast_hash": "f45798be223dfb4f617160bb1a69ae5c",
+    "semantic_hash": ""
+  },
+  "voz/escuchador.py": {
+    "mtime": 1794037102.0714183,
+    "seen": 1794179275.4704406,
+    "ast_hash": "6a925cc3b1c0759c5fe840ab8eb5125d",
+    "semantic_hash": ""
+  },
+  "voz/hablador.py": {
+    "mtime": 1794040512.6944468,
+    "seen": 1794179275.4704418,
+    "ast_hash": "da71b18b99391c998af3f092ae772a41",
+    "semantic_hash": ""
+  },
+  "voz/voz_neural.py": {
+    "mtime": 1794058925.3358772,
+    "seen": 1794179275.470443,
+    "ast_hash": "4f9944cb3bc2db55d8e16d0a4b0d9be1",
+    "semantic_hash": ""
+  },
+  "LEEME.txt": {
+    "mtime": 1794178704.4909732,
+    "seen": 1794179275.4704442,
+    "ast_hash": "6953e681e141fcec04e8d8d4375953f6",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/LICENSE.txt": {
+    "mtime": 1792895270.8684485,
+    "seen": 1794179275.4704454,
+    "ast_hash": "d32239bcb673463ab874e80d47fae504",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/community.html": {
+    "mtime": 1792895271.0305011,
+    "seen": 1794179275.4704463,
+    "ast_hash": "a4cdb9452cdec12d5c59821f48444cdb",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/developer.html": {
+    "mtime": 1792895270.9389343,
+    "seen": 1794179275.4704475,
+    "ast_hash": "c8f9f560c6a944bdf10cb6bd7a04aa6f",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/drawvg-reference.html": {
+    "mtime": 1792895270.9453933,
+    "seen": 1794179275.470449,
+    "ast_hash": "68ac92606ca5e7994d0040af9320a679",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/faq.html": {
+    "mtime": 1792895271.065012,
+    "seen": 1794179275.4704502,
+    "ast_hash": "ca3fb3c7d92b6638be1c3cf9d62ae7b1",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/fate.html": {
+    "mtime": 1792895271.0923848,
+    "seen": 1794179275.470451,
+    "ast_hash": "85c279ef5aacba29fddcffefea018ab2",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-all.html": {
+    "mtime": 1792895270.9707313,
+    "seen": 1794179275.4704525,
+    "ast_hash": "cbf07b7273fd5b7a1d1c684fb6bd845b",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-bitstream-filters.html": {
+    "mtime": 1792895271.041994,
+    "seen": 1794179275.4704535,
+    "ast_hash": "8abc8a8a1aae55b2b0c4225ed69e89eb",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-codecs.html": {
+    "mtime": 1792895270.9276974,
+    "seen": 1794179275.4704547,
+    "ast_hash": "b334cd07d8160db31151afc22ffded23",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-devices.html": {
+    "mtime": 1792895271.076985,
+    "seen": 1794179275.4704561,
+    "ast_hash": "52a4e4b4839bc7e68bd8a63a12ff3a35",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-filters.html": {
+    "mtime": 1792895271.0062768,
+    "seen": 1794179275.4704573,
+    "ast_hash": "b1b7b50b4194bb0d3e2af0fe3c70f4c3",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-formats.html": {
+    "mtime": 1792895271.053315,
+    "seen": 1794179275.4704585,
+    "ast_hash": "59276ef8d67868bcc92e58a8ddc49f5e",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-protocols.html": {
+    "mtime": 1792895271.0354712,
+    "seen": 1794179275.4704597,
+    "ast_hash": "0e4239bdd765cab6a964985025c9e168",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-resampler.html": {
+    "mtime": 1792895271.1386044,
+    "seen": 1794179275.470461,
+    "ast_hash": "f17f10231eac1b1ecf143336aba8927b",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-scaler.html": {
+    "mtime": 1792895270.9566023,
+    "seen": 1794179275.4704623,
+    "ast_hash": "936966b58ae3b5394b50dde967d64b4b",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg-utils.html": {
+    "mtime": 1792895271.0194283,
+    "seen": 1794179275.4704635,
+    "ast_hash": "bd597b9479c522698933216af3897017",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffmpeg.html": {
+    "mtime": 1792895271.0610013,
+    "seen": 1794179275.4704645,
+    "ast_hash": "67d9fc2361c3d65145df26b796a2009f",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffplay-all.html": {
+    "mtime": 1792895271.1223323,
+    "seen": 1794179275.470466,
+    "ast_hash": "d2abf045655020422808f3929fed42cf",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffplay.html": {
+    "mtime": 1792895271.1276398,
+    "seen": 1794179275.4704669,
+    "ast_hash": "f7aeaa8e374ad05159fc53621c7d2d76",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffprobe-all.html": {
+    "mtime": 1792895271.1083782,
+    "seen": 1794179275.470468,
+    "ast_hash": "07a05d41f79102eff29633ba24f4c609",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/ffprobe.html": {
+    "mtime": 1792895271.0807018,
+    "seen": 1794179275.4704695,
+    "ast_hash": "c67dc8b8882f23c5851dbf034fcfd612",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/general.html": {
+    "mtime": 1792895271.0256827,
+    "seen": 1794179275.4704704,
+    "ast_hash": "4d8a6bcbe429da709a823b93943b802a",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/git-howto.html": {
+    "mtime": 1792895270.9337208,
+    "seen": 1794179275.4704716,
+    "ast_hash": "116793476956b3a7eb18929d3e25651a",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/libavcodec.html": {
+    "mtime": 1792895270.9629672,
+    "seen": 1794179275.470473,
+    "ast_hash": "1d241c8399acb46894b77fab29bac872",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/libavdevice.html": {
+    "mtime": 1792895271.0154142,
+    "seen": 1794179275.470474,
+    "ast_hash": "b74c4ec40ffa03a70e6f287e8c60d3e1",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/libavfilter.html": {
+    "mtime": 1792895271.0807018,
+    "seen": 1794179275.4704752,
+    "ast_hash": "07601276c20da5447252fcb34bf2de2c",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/libavformat.html": {
+    "mtime": 1792895270.9114704,
+    "seen": 1794179275.4704764,
+    "ast_hash": "abf40b6398eff56e2c53522ce1f0dfcf",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/libavutil.html": {
+    "mtime": 1792895270.9911294,
+    "seen": 1794179275.4704776,
+    "ast_hash": "01b8fea0cca978eaf8fe9bc7661e6218",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/libswresample.html": {
+    "mtime": 1792895270.997064,
+    "seen": 1794179275.4704785,
+    "ast_hash": "923dd70aface209cf2fce778348df7ec",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/libswscale.html": {
+    "mtime": 1792895270.9474008,
+    "seen": 1794179275.47048,
+    "ast_hash": "e2ed5e294a3c807bc71e4e799ee7e92d",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/mailing-list-faq.html": {
+    "mtime": 1792895271.0475543,
+    "seen": 1794179275.470481,
+    "ast_hash": "45d88165b1289290420a81bec8d53613",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/nut.html": {
+    "mtime": 1792895270.9849195,
+    "seen": 1794179275.470482,
+    "ast_hash": "9bced52cd4ff6f46e28917c4bdd178c1",
+    "semantic_hash": ""
+  },
+  "modelos/ffmpeg-master-gpl/doc/platform.html": {
+    "mtime": 1792895271.0700147,
+    "seen": 1794179275.4704833,
+    "ast_hash": "2e8740208e7721d829844b106d7579b2",
+    "semantic_hash": ""
+  },
+  "requirements.txt": {
+    "mtime": 1794039163.5320268,
+    "seen": 1794179275.4704845,
+    "ast_hash": "26c49e4124bb6fbb1048caf3b4ab9dbe",
+    "semantic_hash": ""
+  },
+  "audios/0tizz wave-RISE AGAIN J.mp3": {
+    "mtime": 1775608314.0,
+    "seen": 1794179275.4704854,
+    "ast_hash": "c5678a7d004865e7d16e437ee18acffd",
+    "semantic_hash": ""
+  },
+  "audios/2pac hit em up dirty music.mp3": {
+    "mtime": 1775954544.0,
+    "seen": 1794179275.4704869,
+    "ast_hash": "9024e3ec25ffc021da1695d0cd3b7909",
+    "semantic_hash": ""
+  },
+  "audios/Adele  Skyfall.mp3": {
+    "mtime": 1794027327.68631,
+    "seen": 1794179275.4704878,
+    "ast_hash": "6df065c0792bb85151ca8730fd6be62f",
+    "semantic_hash": ""
+  },
+  "audios/Afaz Natural - Quiz\u00e1s.mp3": {
+    "mtime": 1776101058.0,
+    "seen": 1794179275.4704902,
+    "ast_hash": "854df1a46508f08be5bd09773b5954cd",
+    "semantic_hash": ""
+  },
+  "audios/Alborosie  Herbalist.mp3": {
+    "mtime": 1794027329.0574136,
+    "seen": 1794179275.4704912,
+    "ast_hash": "408493b792dcebf84b6eb4d6b0830ed5",
+    "semantic_hash": ""
+  },
+  "audios/Alborosie  Kingston Town.mp3": {
+    "mtime": 1794027330.5637624,
+    "seen": 1794179275.4704926,
+    "ast_hash": "e5274874fff6d3c57d4960c9fbb288ed",
+    "semantic_hash": ""
+  },
+  "audios/Alborosie - Kingston Town.mp3": {
+    "mtime": 1776100936.0,
+    "seen": 1794179275.470494,
+    "ast_hash": "96537ae82aa00ae82de460d7ef1cdef9",
+    "semantic_hash": ""
+  },
+  "audios/Alpha Blondy - Jerusalem.mp3": {
+    "mtime": 1776100834.0,
+    "seen": 1794179275.4704952,
+    "ast_hash": "99e739b41dd655228e2062943c6653fa",
+    "semantic_hash": ""
+  },
+  "audios/Amorsura.mp3": {
+    "mtime": 1794027332.5875845,
+    "seen": 1794179275.4704964,
+    "ast_hash": "6cf5790b6d4ab94866266b469c2b2348",
+    "semantic_hash": ""
+  },
+  "audios/Andr\u00e9s Calamaro  Flaca.mp3": {
+    "mtime": 1794027335.122181,
+    "seen": 1794179275.4704978,
+    "ast_hash": "5db947c0a38fd35d68dfa3e0e7f5cb9f",
+    "semantic_hash": ""
+  }
+}

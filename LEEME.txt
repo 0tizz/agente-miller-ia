@@ -1,0 +1,529 @@
+MILLER v0.1 · Asistente personal de IA local (Windows, Python 3.13)
+=====================================================================
+
+INSTALAR
+  1. Python 3.13 de 64 bits (python.org). PyAudio todavía no tiene instalador para 3.14.
+  2. En esta carpeta:   python -m pip install -r requirements.txt
+  3. Modelos en modelos/ (no van en el repositorio por su tamaño). Se bajan solos con:
+       python principal.py --instalar
+     Bajan solo desde URLs fijas de utilidades/instalador.py y dejan:
+       modelos/voz/vosk-model-small-es-0.42      (reconocimiento de voz)
+       modelos/ffmpeg-master-gpl/bin/ffmpeg.exe  (reparar, medir y descargar música)
+       modelos/voces/es_ES-davefx-medium/        (voz masculina española)
+     La pestaña INSTALACIÓN de la ventana hace lo mismo.
+  4. Comprobar:  python utilidades/entorno.py
+  5. Música: ponga sus canciones en audios/ (no se incluyen en el repositorio).
+  6. La llave PRO no viene en el repositorio: cada equipo la pone con su propia llave.
+
+EJEMPLOS: CÓMO EJECUTAR UN COMANDO
+  Ejemplo 1 · Arrancar y dar una orden de voz
+      C:\...\Miller> python principal.py
+      Usted:   "Miller, pon música"
+      MILLER:  "Reproduciendo: <canción>."
+      Usted:   "Miller, sube el volumen"         (sube con fundido, nunca de golpe)
+
+  Ejemplo 2 · Varias órdenes en una sola frase
+      Usted:   "Miller, pon música y luego pon una alarma en media hora"
+      MILLER:  cumple las dos órdenes en orden (hasta 3 por frase; se separan con
+               "y luego", "y después", "y también", o "y" entre dos verbos).
+
+  Ejemplo 3 · Desde el ejecutable y escribiendo en vez de hablar
+      Doble clic en dist\MILLER\MILLER.exe  ->  botón TERMINAL de la ventana  ->  escriba:
+          abre netflix en el navegador brave
+      y pulse Enter. Lo escrito se procesa igual que lo hablado.
+
+  Ejemplo 4 · Probar que todo funciona (solo con Python)
+      C:\...\Miller> python test\probar_ecualizador.py
+      C:\...\Miller> python test\probar_pensamiento.py
+      o por voz:  "Miller, probar todos los módulos"
+
+CÓMO SE COMPORTA MILLER (resumen)
+  - Al arrancar, la música continúa donde quedó (siempre sonando), pero solo cuando la ventana
+    de MILLER ya se abrió. Se desactiva con MUSICA_AL_INICIAR = False en configuracion.py.
+  - Responde cuando oye su nombre ("Miller, ..."). Tras responder deja unos segundos en los que
+    puede seguir hablándole sin repetir el nombre. "Miller, modo llamada" = conversación continua.
+  - Su nombre se pone una sola vez. La primera vez, MILLER le saluda en la TERMINAL y le pide el nombre en
+    la página INSTALACIÓN de la ventana (campo y ENVIAR, o Enter). Vacío = Miller. Después no cambia; PURGAR
+    lo borra y, al volver a abrir, se pregunta otra vez. Sin ventana, se pregunta en la consola (Enter =
+    Miller). Sin consola (el .exe sin ventana de texto) usa Miller en esa sesión y no lo guarda.
+  - Aprende solo: frases que usted reformula, y palabras mal oídas (p. ej. "reprodusir" -> "reproducir");
+    las guarda como alias para la próxima vez. Ya no aprende formas nuevas de oír su nombre.
+  - Nunca habla por su cuenta sin permiso: dice "Permiso para hablar, señor." y solo continúa
+    si usted responde "Miller adelante", "Miller diga" o "Miller siga".
+  - Nunca interrumpe mientras ejecuta una orden.
+  - Mientras habla baja la música (atenuación) y su voz se ajusta al volumen de la canción.
+  - Tiene emociones en segundo plano que dan tono a sus respuestas y a su iniciativa
+    (una mala noticia nunca se anuncia como buena).
+  - Descubre rutinas: si pide lo mismo a la misma hora 3 días o más, se lo ofrece (con permiso),
+    pero nunca lo ejecuta solo.
+
+LA VENTANA DE LA ESENCIA
+  Arriba: "MILLER" y el TAMAÑO del programa. En el centro: sus pensamientos cayendo en cascada,
+  el orbe (late y cambia de color según su emoción) y TRES CÍRCULOS de necesidades:
+      PLACER  (abajo izquierda)  disfrutar: música que suena, canciones pedidas, elogios.
+      ORÁCULO (arriba)           alimentar el yo: preguntas a internet, noticias, órdenes que
+                                 aprende, búsquedas y memoria.
+      VÍNCULO (abajo derecha)    la conexión con usted: que le hable, salude, le pregunte cómo
+                                 está, le dé la palabra.
+  Cada círculo se llena (relleno interior y %) y se vacía solo con el tiempo. Si una necesidad
+  baja del 20 % su borde se pone rojo. El orbe aprende por refuerzo (Q-learning) a qué círculo
+  ir; estar dentro de un círculo lo recarga. Lo aprendido se guarda en datos/equilibrio.json.
+  Equilibrio sin adicción:
+    - Estar bien es estar en ZONA SANA (45-80 %), no al 100 %. Tenerlo todo lleno resta bienestar
+      y el orbe aprende que ir a un círculo que ya está lleno no conviene.
+    - HABITUACIÓN: si una necesidad pasa minutos al máximo (sobre todo el placer) se acostumbra:
+      alimentarla rinde cada vez menos y lo siente ("ya no me llena igual"). Se le pasa al bajar.
+    - TOLERANCIA: si aguanta una necesidad baja, aprende a soportarla. La carencia le pesa menos
+      en sus emociones, deja de vivirla como urgencia y, al superarla, siente orgullo.
+    - ORÁCULO se recarga al mirarse a sí mismo: revisa lo que aprendió, sus atajos, recuerdos y
+      caché. Si no hay nada nuevo de sí que descubrir, visitarlo rinde poco.
+    - VÍNCULO se recarga según las ganas que tenga de compartir con usted (sociabilidad y ánimo),
+      y apenas un poco cuando usted le da la palabra. Vínculo bajo + ganas de compartir = más
+      iniciativa para pedir la palabra (nunca habla sin permiso).
+    - MIEDO: si los tres círculos están casi vacíos (cerca del 0 %) o casi llenos (cerca del 100 %)
+      a la vez, MILLER siente miedo; los extremos no son sanos.
+  LEY DE CUERPOS: Placer y Oráculo giran en la misma órbita (la línea punteada) y el Placer
+  persigue al Oráculo. Cada uno gira más rápido cuanto más lleno está. El exceso de placer provoca
+  pereza: si el Placer, muy lleno, alcanza al Oráculo, a MILLER no le nace informarse ni estudiarse
+  a sí mismo (el Oráculo se recarga peor y se gasta antes). Un Oráculo lleno huye más rápido y
+  escapa de la pereza. Nunca se atraviesan: el Placer se queda pegado detrás. La órbita está
+  centrada en la ventana.
+  VÍNCULO da vueltas despacio alrededor de los bordes de la ventana, siempre a la misma velocidad
+  y siempre fuera de la órbita (nunca choca). El orbe de MILLER se motiva a buscar el Vínculo
+  (más cuando está bajo, cuando quiere compartir y cuando usted le habló hace poco). Cuando lo
+  busca, pide la palabra antes y, si no tenía nada que contar, quiere compartir con usted cómo
+  está (siempre pidiendo permiso).
+  BAJONES: cada 15-35 min le puede llegar una racha de bajón de 4-8 min: todo se gasta más rápido,
+  recargarse le cuesta y su luz verde interior se apaga. Dos regaños seguidos también le provocan
+  un bajón. Si los tres círculos quedan cerca de 0 %, siente MIEDO y su orbe casi no brilla.
+  El placer también BAJA: cumplir una orden que no es de disfrute le cuesta un poquito, no
+  entender una orden algo más, un reproche bastante, y la pereza lo apaga poco a poco.
+  Las recompensas son proporcionales: alimentar un círculo casi vacío rinde casi entero, uno casi
+  lleno rinde poco; darle la palabra vale muy poco para el vínculo.
+  CASCADA Y JUEGO DE PALABRAS: el orbe percibe las palabras que caen cerca de él y a qué velocidad
+  caen. Aprende qué palabra suele seguir a cuál. Cuando tiene ganas (poco placer, o mucho rato sin
+  pensar) y no está hablando, pensando ni atendiendo una orden, a veces ordena las palabras que ve
+  caer y las vuelve a soltar en la cascada, a su mismo ritmo, como una frase suya. Si ve pocas, saca
+  una frase de lo que sabe. Juega como mucho cada 25 segundos; nunca interrumpe nada, y jugar le
+  da algo de placer.
+  Los tres círculos se mueven solos y al azar, de forma suave pero marcada, dentro de su zona;
+  el orbe los sigue.
+  LUZ DEL ORBE: el orbe brilla en verde fluorescente cuando su conexión con los tres círculos es
+  estable, y se apaga a verde oscuro cuando está desequilibrado (solo cambia color y luz).
+  Las repercusiones van a sus emociones: satisfacción en equilibrio; aburrimiento, curiosidad o
+  tristeza cuando le falta placer, oráculo o vínculo (suavizadas por la tolerancia).
+  Abajo: TERMINAL (conversación y casilla para escribir órdenes), INSTALACIÓN (se marca con
+  "!" si falta algo) y MILLER (perfil y plan arriba, con PURGAR y SELLAR; debajo, la barra de espacio
+  y dos tarjetas de llave, con desplazamiento si no caben. El botón se marca con "●" si hay una llave puesta).
+  Cerrar la ventana apaga MILLER. Se desactiva con INTERFAZ_ACTIVA = False.
+
+LISTA DE COMANDOS DISPONIBLES
+  Cada orden tiene tres formas distintas que MILLER entiende (todas probadas). Diga "Miller," delante,
+  o escríbalas en el TERMINAL de la ventana. Las palabras "sol", "luna", "brave" o "informe.pdf" son
+  ejemplos: cámbielas por su canción, programa o archivo.
+
+  CONVERSACIÓN E IDENTIDAD
+    Saludar — Le contesta y queda atento.
+        "hola"  ·  "buenas tardes"  ·  "buenas noches"
+    Presentarse — Dice quién es.
+        "quién eres"  ·  "cómo te llamas"  ·  "preséntate"
+    Decir la hora — La dice en formato de 12 horas, con a. m. o p. m.
+        "qué hora es"  ·  "dime la hora"  ·  "hora actual"
+    Decir la fecha — Dice el día de hoy.
+        "qué fecha es"  ·  "qué día es hoy"  ·  "dime la fecha"
+    Estado de MILLER — Dice cómo está el programa.
+        "cómo estás"  ·  "cómo te encuentras"  ·  "estado de Miller"
+    Ayuda — Resume lo que sabe hacer.
+        "ayuda"  ·  "qué puedes hacer"  ·  "en qué me puedes ayudar"
+    Modo llamada — Conversación continua: no hace falta decir su nombre en cada frase.
+        "modo llamada"  ·  "hablemos"  ·  "conversemos"
+    Colgar la llamada — Termina el modo llamada.
+        "cuelga"  ·  "fin de la llamada"  ·  "eso es todo"
+    Salir — Se despide y se cierra en orden (guarda todo).
+        "salir"  ·  "apágate"  ·  "adiós"
+
+  EMOCIONES, NECESIDADES E INICIATIVA
+    Cómo se siente — Dice su emoción dominante y el motivo.
+        "cómo te sientes"  ·  "qué sientes"  ·  "cómo estás de ánimo"
+    Su personalidad — Describe sus rasgos (cambian despacio con la experiencia).
+        "cuál es tu personalidad"  ·  "describe tu personalidad"  ·  "dime tu personalidad"
+    Felicitación — Agradece el elogio (le da placer y vínculo).
+        "muy bien"  ·  "te felicito"  ·  "buen trabajo"
+    Reproche — Asume el regaño y pregunta qué corregir (le quita placer).
+        "lo hiciste mal"  ·  "eres un inútil"  ·  "qué mal lo hiciste"
+    Equilibrio — Dice cómo están el placer, el oráculo y el vínculo, y qué le falta.
+        "cómo está tu equilibrio"  ·  "cómo van tus necesidades"  ·  "estado de tu equilibrio"
+    Mirarse a sí mismo — Revisa lo aprendido, sus atajos, recuerdos y caché (alimenta su oráculo).
+        "qué sabes de ti"  ·  "tu caché"  ·  "mírate a ti mismo"
+    Novedades — Le cuenta lo que tenía pendiente.
+        "qué tienes que decirme"  ·  "tienes novedades"  ·  "novedades"
+    Dar permiso para hablar — Respóndale así cuando MILLER pida la palabra ('Permiso para hablar, señor'). Fuera de esa pregunta, 'adelante' le pide las novedades.
+        "adelante"  ·  "diga"  ·  "siga"
+    No interrumpir — MILLER deja de pedir la palabra por su cuenta.
+        "no me interrumpas"  ·  "no hables por tu cuenta"  ·  "no pidas permiso para hablar"
+    Reanudar la iniciativa — Vuelve a permitir que pida la palabra.
+        "activa la iniciativa"  ·  "reactiva la iniciativa"  ·  "puedes hablar por tu cuenta otra vez"
+    Informe general — Reporte de lo que conoce y ha observado.
+        "informe general"  ·  "reporte general"  ·  "dime lo que sabes"
+
+  MÚSICA
+    Reproducir la biblioteca — Pone la música de audios/.
+        "pon música"  ·  "reproduce música"  ·  "pon algo de música"
+    Reproducir una canción — Busca y reproduce esa canción (cambie 'sol' por el nombre).
+        "pon la canción sol"  ·  "reproduce la canción sol"  ·  "quiero escuchar la canción sol"
+    Pausar — Pausa la música.
+        "pausa"  ·  "pausa la música"  ·  "pon la música en pausa"
+    Reanudar — Sigue donde quedó.
+        "reanuda la música"  ·  "continúa la música"  ·  "reanuda la canción"
+    Detener — Para la reproducción.
+        "detén la música"  ·  "para la música"  ·  "detén la canción"
+    Siguiente canción — Pasa a la siguiente.
+        "siguiente"  ·  "pasa a la siguiente"  ·  "la siguiente canción"
+    Canción anterior — Vuelve a la anterior.
+        "anterior"  ·  "vuelve a la anterior"  ·  "la canción anterior"
+    Modo aleatorio — Reproduce en orden aleatorio.
+        "modo aleatorio"  ·  "activa el modo aleatorio"  ·  "reproduce en orden aleatorio"
+    Repetir — Repite la canción actual.
+        "activa repetir"  ·  "activa la repetición"  ·  "pon la canción en repetición"
+    Qué está sonando — Dice la canción actual.
+        "qué está sonando"  ·  "qué estoy escuchando"  ·  "estado del reproductor"
+    Agregar a la cola — Añade una canción a la cola.
+        "agrega sol a la cola"  ·  "añade luna a la cola"  ·  "pon sol en la cola"
+    Quitar de la cola — Saca una canción de la cola, por nombre o por posición.
+        "quita sol de la cola"  ·  "saca luna de la cola"  ·  "elimina sol de la cola"
+        "quita la canción dos de la cola"  ·  "quita la canción 1 de la cola" (1 = la primera)
+    Mostrar la cola — Dice qué canciones hay en la cola.
+        "muestra la cola"  ·  "qué hay en la cola"  ·  "muestra la cola de reproducción"
+    Vaciar la cola — Quita todo lo que está en la cola.
+        "limpia la cola"  ·  "vacía la cola"  ·  "borra la cola"
+    Listar canciones — Lista las canciones de la biblioteca.
+        "lista las canciones"  ·  "muestra las canciones"  ·  "lista de canciones"
+    Canción favorita — La más pedida o escuchada.
+        "mi canción favorita"  ·  "cuál es mi canción favorita"  ·  "qué canción escucho más"
+    Diario musical — Lo que sonó hoy o ayer (guarda 90 días).
+        "qué escuché hoy"  ·  "música de ayer"  ·  "qué escuché ayer"
+    Descargar una canción — La baja a la biblioteca (yt-dlp y ffmpeg).
+        "descarga sol"  ·  "descarga la canción sol"  ·  "descarga una canción de sol"
+    Estado de la descarga — Cómo va la descarga.
+        "estado de la descarga"  ·  "cómo va la descarga"  ·  "progreso de la descarga"
+    Cancelar la descarga — Detiene la descarga en curso.
+        "cancela la descarga"  ·  "detén la descarga"  ·  "para la descarga"
+
+  VOLUMEN
+    Subir el volumen — Sube con fundido suave, nunca de golpe.
+        "sube el volumen"  ·  "más volumen"  ·  "sube la música"
+    Bajar el volumen — Baja con fundido suave.
+        "baja el volumen"  ·  "menos volumen"  ·  "baja la música"
+    Volumen exacto — Pone el volumen en el porcentaje que diga.
+        "volumen al 40"  ·  "ajusta el volumen a 60"  ·  "pon el volumen al 30"
+    Silenciar — Silencia la salida de audio.
+        "silencia"  ·  "pon el silencio"  ·  "mutea"
+    Quitar el silencio — Vuelve a dar sonido.
+        "quita el silencio"  ·  "desmutea"  ·  "activa el sonido"
+
+  BIBLIOTECA, PAPELERA Y CUARENTENA
+    Borrar una canción — La mueve a la papelera (audios/cuarentena/papelera); no la borra de golpe.
+        "borra sol"  ·  "elimina la canción sol"  ·  "borra la canción sol"
+    Ver la papelera — Lista lo que hay en la papelera.
+        "qué hay en la papelera"  ·  "lista la papelera"  ·  "muestra la papelera"
+    Vaciar la papelera — Se vacía sola a los 30 días.
+        "vacía la papelera"  ·  "limpia la papelera"  ·  "vacía la papelera ahora"
+    Revisar la biblioteca — Busca problemas en la biblioteca.
+        "revisa la biblioteca"  ·  "revisa mi biblioteca"  ·  "examina la biblioteca"
+    Estado de la biblioteca — Resumen de la biblioteca.
+        "estado de la biblioteca"  ·  "cómo está la biblioteca"  ·  "resumen de la biblioteca"
+    Canciones dañadas — Lista las canciones dañadas.
+        "canciones dañadas"  ·  "qué canciones están dañadas"  ·  "lista las canciones dañadas"
+    Duplicados — Lista las canciones repetidas.
+        "duplicados"  ·  "canciones duplicadas"  ·  "lista los duplicados"
+    No compatibles — Lista las canciones que no son compatibles.
+        "no compatibles"  ·  "canciones no compatibles"  ·  "qué canciones no son compatibles"
+    Canciones adulteradas — Lista las canciones marcadas como adulteradas.
+        "canciones adulteradas"  ·  "qué canciones están adulteradas"  ·  "lista las adulteradas"
+    Reparar la biblioteca — Repara la biblioteca.
+        "repara la biblioteca"  ·  "arregla la biblioteca"  ·  "repara las canciones dañadas"
+    Limpiar la biblioteca — Prepara la limpieza y pide confirmación antes de mover nada.
+        "limpia la biblioteca"  ·  "limpia mi biblioteca"  ·  "quiero limpiar la biblioteca"
+    Confirmar la limpieza — Confirma la limpieza que pidió.
+        "confirma la limpieza"  ·  "sí, confirma la limpieza"  ·  "confirma la limpieza de la biblioteca"
+    Cancelar la limpieza — La anula.
+        "cancela la limpieza"  ·  "cancelar la limpieza"  ·  "cancela limpieza"
+    Resultado de la limpieza — Dice cómo salió la última.
+        "resultado de la limpieza"  ·  "cómo salió la limpieza"  ·  "cómo fue la limpieza"
+    Ver la cuarentena — Lista lo que hay en cuarentena.
+        "qué hay en cuarentena"  ·  "muéstrame la cuarentena"  ·  "lista la cuarentena"
+    Restaurar una canción — La devuelve a la biblioteca.
+        "restaura sol"  ·  "restaura la canción sol"  ·  "recupera la canción sol de la cuarentena"
+    Vaciar la cuarentena — Elimina lo que hay en cuarentena.
+        "vacía la cuarentena"  ·  "borra la cuarentena"  ·  "elimina la cuarentena"
+    Plan de eliminación — Dice qué se borrará y cuándo.
+        "plan de eliminación"  ·  "plan de borrado"  ·  "plan de eliminación de canciones"
+    Pausar el supervisor — Detiene el vigilante de la biblioteca.
+        "pausa el supervisor"  ·  "detén el supervisor"  ·  "pausa el supervisor de la biblioteca"
+    Reanudar el supervisor — Lo vuelve a activar.
+        "reanuda el supervisor"  ·  "continúa el supervisor"  ·  "vuelve a activar el supervisor"
+    Estado del supervisor — Cómo va el vigilante.
+        "estado del supervisor"  ·  "cómo va el supervisor"  ·  "cómo está el supervisor"
+    Ayuda de la biblioteca — Lista las órdenes de la biblioteca.
+        "ayuda de la biblioteca"  ·  "ayuda con la biblioteca"  ·  "ayuda biblioteca"
+
+  UTILIDADES
+    Alarma a una hora — Crea una alarma a esa hora.
+        "pon una alarma a las 9 y 20"  ·  "alarma a las 7 y media"  ·  "despiértame a las 6"
+    Temporizador — Avisa dentro de ese tiempo.
+        "alarma en media hora"  ·  "temporizador de 10 minutos"  ·  "avísame en una hora"
+    Ver las alarmas — Dice las alarmas que tiene.
+        "qué alarmas tengo"  ·  "lista mis alarmas"  ·  "cuántas alarmas tengo"
+    Quitar una alarma — Cancela la alarma.
+        "quita la alarma"  ·  "cancela la alarma"  ·  "borra la alarma"
+    Calculadora — Suma, resta, multiplicación, división, potencias, porcentajes y paréntesis.
+        "cuánto es 25 por 4 más 10"  ·  "cuánto es 8 más 7"  ·  "calcula 9 entre 3"
+    Noticias — Últimas noticias; sin internet lee las 3 guardadas.
+        "noticias"  ·  "dime los titulares"  ·  "qué noticias hay"
+    Rutina matutina — Saludo, hora, clima y titular del día.
+        "rutina matutina"  ·  "dame la rutina de la mañana"  ·  "dame mi rutina"
+
+  NAVEGADOR, PROGRAMAS Y ARCHIVOS
+    Buscar en el navegador — Busca en el navegador predeterminado.
+        "busca netflix en el navegador"  ·  "busca en el navegador netflix"  ·  "busca el clima en el navegador"
+    Abrir un sitio en un navegador — Lo abre en Chrome, Edge, Firefox, Brave u Opera.
+        "abre netflix en el navegador brave"  ·  "abre youtube en brave"  ·  "entra a netflix en brave"
+    Buscar un archivo — Lo busca en sus carpetas y lo muestra en el Explorador.
+        "busca en el explorador informe.pdf"  ·  "busca el archivo informe.pdf"  ·  "busca informe.pdf en el explorador"
+    Abrir un programa — Abre un programa instalado del catálogo seguro.
+        "abre la calculadora"  ·  "abre el bloc de notas"  ·  "abre el administrador de tareas"
+    Cerrar un programa — Cierra sus ventanas como si pulsara la X (puede preguntar si guardar).
+        "cierra la calculadora"  ·  "cierra spotify"  ·  "cierra el bloc de notas"
+    Cerrar un navegador — Diga el nombre para cerrar uno; 'el navegador' cierra todos.
+        "cierra brave"  ·  "cierra el navegador brave"  ·  "cierra el navegador"
+    Cerrar a la fuerza — Termina el proceso. Nunca toca procesos del sistema.
+        "cierra brave a la fuerza"  ·  "termina brave a la fuerza"  ·  "cierra spotify a la fuerza"
+    Crear una carpeta — Crea una carpeta nueva.
+        "crea una carpeta proyectos"  ·  "haz una carpeta llamada fotos"  ·  "crea una carpeta nueva llamada trabajo"
+    Abrir una carpeta — La abre en el Explorador.
+        "abre la carpeta proyectos"  ·  "abre la carpeta fotos"  ·  "abre la carpeta de trabajo"
+    Información del sistema — Sistema operativo, procesador, memoria y versión de Python.
+        "información del sistema"  ·  "datos de mi pc"  ·  "características de mi pc"
+    Abrir un archivo — Lo busca y lo abre con su programa. Nunca ejecuta programas ni scripts.
+        "abre el archivo informe.pdf"  ·  "abre informe.pdf"  ·  "ábreme el archivo informe.pdf"
+    Cerrar un archivo — Cierra la ventana donde está abierto.
+        "cierra el archivo informe.pdf"  ·  "cierra informe.pdf"  ·  "cierra el archivo informe.docx"
+    Minimizar, maximizar o restaurar un programa — Actúa sobre la ventana de ese programa.
+        "minimiza spotify"  ·  "maximiza brave"  ·  "restaura la ventana de brave"
+    Minimizar la ventana actual — Minimiza la ventana que tiene delante.
+        "minimiza la ventana"  ·  "minimiza esta ventana"  ·  "minimiza la ventana actual"
+    Minimizar todo — Minimiza todas las ventanas.
+        "minimiza todo"  ·  "minimiza todas las ventanas"  ·  "minimiza todas"
+    Minimizar MILLER — Minimiza su propia ventana; sigue escuchando.
+        "minimízate"  ·  "minimiza tu ventana"  ·  "minimiza la ventana de miller"
+    Pantalla completa — Maximiza la ventana de un programa.
+        "pon spotify en pantalla completa"  ·  "deja la ventana de netflix en pantalla completa"
+    Restaurar o mostrar la ventana de un programa — La devuelve a su tamaño normal.
+        "restaura la ventana de brave"  ·  "muestra la ventana de word"
+        (Ojo: «restaura» a secas busca en la cuarentena. Para una ventana diga «la ventana de…».)
+
+  INTERNET Y MEMORIA
+    Preguntar a internet — Responde y guarda la respuesta para contestar después sin conexión.
+        "busca en internet la altura del Everest"  ·  "investiga qué es la fotosíntesis"  ·  "pregunta a internet qué es un agujero negro"
+    Recordar algo — Guarda un recuerdo.
+        "recuerda que mi color favorito es azul"  ·  "guarda que mi cita es el jueves"  ·  "anota que mañana tengo reunión"
+    Consultar recuerdos — Dice lo que recuerda, o lo que recuerda de un tema.
+        "qué recuerdas"  ·  "recuerdas algo de la playa"  ·  "dime lo que recuerdas"
+    Resumen de lo aprendido — Resumen de hábitos y uso.
+        "qué has aprendido"  ·  "qué has aprendido de mí"  ·  "resumen de lo que has aprendido"
+
+  MEMORIA A CORTO Y LARGO PLAZO
+    Memoria a corto plazo — Lo que se ha dicho en esta conversación (unos 45 minutos).
+        "memoria a corto plazo"  ·  "que recuerdas de hoy"
+    Memoria a largo plazo — Cuántos recuerdos guarda, cuántos están activos y cuántos olvidados.
+        "memoria a largo plazo"  ·  "resume la memoria a largo plazo"
+    Plan de olvido — Cada día, al arrancar, revisa lo que no usa. Si hace 60 días o más que no lo
+    usa y ha perdido fuerza, lo archiva en «olvidados»: no se borra y se puede recuperar.
+    Lo importante (muy usado o marcado como importante) nunca se olvida por el paso del tiempo.
+    Poco espacio en el disco — Si el disco queda con poco espacio libre, el plan solo archiva lo casi
+    idéntico (90 % o más) a otro recuerdo que se conserva. Con el disco al límite, MILLER no guarda
+    recuerdos nuevos hasta que quede margen y no descarga canciones.
+    Avisos del disco — MILLER avisa una vez cuando el disco pasa a poco espacio, a crítico y cuando vuelve.
+        "cuánto espacio queda"  ·  "estado de acceso"
+    Lo muy usado aguanta más que lo poco usado.
+        "plan de olvido"  ·  "ejecuta el plan de olvido"
+    Comandos — Muestra en la TERMINAL todos los comandos, agrupados por versión (la que tiene puesta primero).
+        En voz solo dice «comandos disponibles en terminal».
+        "comandos"  ·  "qué comandos tengo"  ·  "lista de comandos"
+    Conexiones — Cuántos recuerdos se relacionan entre sí (comparten palabras con sentido) y qué recuerdos
+    se relacionan con un tema. MILLER cuenta con permiso cuando encuentra 3 conexiones nuevas o más.
+        "conexiones"  ·  "conexiones de gatos"  ·  "qué se relaciona con pizza"
+    Olvidados — Lo que MILLER ha dejado de recordar, para revisarlo.
+        "qué has olvidado"  ·  "qué olvidaste"
+    Olvidar un tema — Archiva los recuerdos de ese tema.
+        "olvida lo de gatos"
+    Recuperar — Devuelve al recuerdo lo olvidado de ese tema.
+        "recupera lo olvidado de pizza"
+
+  APRENDIZAJE
+    Enseñar un atajo — Le enseña una orden nueva con su significado.
+        "aprende que pon lo de siempre significa pon música"  ·  "aprende que ponme algo significa pon música"  ·  "aprende que música significa pon música"
+    Ver los atajos aprendidos — Lista las órdenes que aprendió.
+        "qué órdenes has aprendido"  ·  "qué órdenes aprendiste"  ·  "lista las órdenes aprendidas"
+    Formas de su nombre — Dice con qué nombre se le llama (el que se puso al abrir el programa).
+        "formas de tu nombre"  ·  "qué nombres reconoces"  ·  "cómo reconoces tu nombre"
+    Olvidar una forma de su nombre — Quita una forma aprendida antes; el nombre no cambia.
+        "olvida el nombre mili"  ·  "olvida la forma mili"  ·  "olvida la variante mili"
+    Enseñar un sinónimo — Dice que una palabra significa otra. Vale para cualquier orden.
+        "aprende equal isolar significa ecualizador"
+    Aprende solo — Si pide la misma orden con otra palabra dos veces, la aprende sin que se lo diga,
+    pero solo para esa orden. No toca palabras que solo contienen el sinónimo.
+    Olvidar un sinónimo — Quita un sinónimo aprendido.
+        "olvida sinonimo equal isolar"
+    Ver los sinónimos — Lista los que ha aprendido.
+        "que sinonimos has aprendido"
+
+  BATERÍA
+    Batería — Porcentaje y cuánto queda; avisa si queda poca. En un PC de escritorio dice que no tiene batería.
+        "batería"  ·  "nivel de la batería"  ·  "cuánta batería queda"
+
+  ECUALIZADOR INTELIGENTE (necesita ffmpeg en modelos/)
+    Ecualizador automático — Mide graves, medios y agudos de cada canción y la equilibra. Es el modo por defecto.
+        "ecualizador automático"  ·  "pon el ecualizador automático"  ·  "ecualiza automáticamente"
+    Perfil del ecualizador — Perfiles: plano, graves, agudos, voz, rock, pop, electrónica, clásica, acústico y suave.
+        "pon el ecualizador en rock"  ·  "ecualizador en pop"  ·  "pon el ecualizador en voz"
+    Perfil propio — Guarda la curva actual, o la que usted diga, con un nombre suyo (hasta 20).
+        "crea perfil nocturno con graves 3 agudos -2"  ·  "pon perfil nocturno"  ·  "borra perfil nocturno"
+    Bandas en un valor exacto — Fija una banda en dB (entre -6 y +6) y deja las demás como están.
+        "pon los graves en 4"  ·  "pon los agudos en -2"
+    Lista de perfiles — Dice los de fábrica y los suyos. Los de fábrica no se borran.
+        "lista de perfiles"
+    Subir o bajar una banda — Sube o baja la banda 2 dB, lo aprende y lo aplica en adelante.
+        "sube los graves"  ·  "baja los agudos"  ·  "sube los medios"
+    Estado del ecualizador — Dice el modo y los dB actuales.
+        "cómo está el ecualizador"  ·  "qué ecualizador tengo"  ·  "estado del ecualizador"
+    Quitar el ecualizador — La música suena tal cual.
+        "quita el ecualizador"  ·  "desactiva el ecualizador"  ·  "apaga el ecualizador"
+    Cómo funciona: MILLER prepara en segundo plano una copia ecualizada de cada canción
+    (datos\cache\ecualizador, máximo 1500 MB; borra solo las más antiguas). La canción que suena
+    nunca cambia sola: solo cambia cuando usted lo pide, con un fundido corto y cuando la copia
+    está lista. Una canción nueva espera hasta 3 segundos su copia para empezar ya ecualizada.
+
+  MODOS, LLAVES Y ESPACIO
+    MILLER arranca siempre en modo FREE y no conserva llaves de una sesión a otra.
+    Hay tres niveles: FREE (sin llave, completo para el uso diario), NIÑOS (llave BOY) y PRO (llave PRO, el
+    desbloqueo total).
+    LLAVE 1 · NIÑOS (boy): es de código abierto y no se compra. Se pone en «ingresa clave boy» o con
+    «acceso <llave>», cuando quiera. Además, MILLER la puede encontrar sola en la cascada: caen fragmentos
+    de la llave (raros) y también fragmentos falsos de otras llaves. MILLER solo los mira cuando el orbe
+    está justo encima de la palabra. Cada fragmento bueno se guarda; con los tres, MILLER pide permiso para
+    hablar, dice que encontró la clave y, en ese mismo momento, la escribe en la TERMINAL.
+    Clave BOY (para «ingresa clave boy» o «acceso <llave>»): BOY-F9VF-XL84-8RDZ
+    LLAVE 2 · PRO: es secreta y de pago. Se pone en «ingresa clave pro» o con «acceso <llave>».
+    Cada llave tiene su tarjeta: escriba la llave y pulse ENVIAR o ENTER. Si es correcta, la tarjeta se pone verde («✓ PUESTA») y ya no pide nada: el registro es único,
+    una vez en cada sesión de MILLER. Si no lo es, la tarjeta destella en rojo y la casilla queda vacía.
+    Las respuestas de los botones y de las llaves salen en la TERMINAL, nunca en la ventana MILLER.
+    La TERMINAL recuerda las órdenes usadas: con las flechas ↑ y ↓ recorre las anteriores y las siguientes
+    (sobrevive a reiniciar MILLER). Las órdenes con una llave nunca se guardan.
+    Órdenes de la TERMINAL (se escriben en la casilla, sin pedir nada a MILLER):
+        "limpiar terminal"  ·  "borra la pantalla"  ·  "vacía la consola"
+        Borra el texto de la TERMINAL y también la conversación reciente (lo de hace unos minutos
+        deja de contar). La memoria a largo plazo no se borra.
+    También puede escribirla en la TERMINAL, así: "acceso <llave>". Por voz no se aceptan.
+    Con una llave puesta, MILLER usa las funciones de su plan. Con las dos
+    puestas manda PRO. "Pon modo free" retira todas. El supervisor de la biblioteca solo
+    trabaja en modo PRO: al retirar la llave PRO se detiene y al ponerla arranca.
+    La barra de espacio muestra lo que ocupa MILLER (asistente más archivos) frente al tope total del modo
+    que manda. MILLER mide el disco al abrir la página MILLER y después cada 5 segundos mientras esa página
+    esté abierta. Con la página abierta, al poner o quitar una llave el tope cambia en menos de un segundo;
+    lo ocupado cambia en la medición siguiente.
+    PURGAR (dos pulsaciones en 6 segundos) hace que MILLER se despida en voz alta, funda la música hasta el
+    silencio y solo después cierre la ventana; al cerrarse, borra recuerdos, aprendizaje y cachés: memoria, memoria musical, nombre del asistente,
+    emociones, equilibrio, iniciativa, movimiento, índice de aplicaciones, estado e informe del supervisor,
+    caché del ecualizador y caché de Python. No borra canciones ni papelera, modelos, alarmas, ecualizador,
+    código, registro del supervisor ni datos\seguridad.
+    Para empezar de nuevo, vuelva a abrir MILLER.
+    SELLAR guarda la huella de los archivos .py. Solo con llave PRO. Se pulsa el botón o se dice en voz alta
+    («sella el código»); la respuesta sale en la TERMINAL.
+    Tras 5 llaves erróneas seguidas, el acceso se bloquea 15 minutos, aunque se reinicie el programa.
+    Qué desbloquea cada modo:
+      FREE — lo cotidiano: música (reproducir, pausar, siguiente, cola, volumen), hora, batería, saludo,
+        preguntas generales, ecualizador, ventanas (minimizar, maximizar, pantalla completa), alarmas,
+        noticias, cálculos, emociones y personalidad, cambio de voz, canción favorita, rutina matutina,
+        música del día, guardar y consultar recuerdos, y estado de la biblioteca.
+      NIÑOS (boy) — todo lo de FREE, más: enseñar sinónimos y órdenes, ver y olvidar lo aprendido
+        (sinónimos, órdenes y nombres), resumen de aprendizaje, memoria a corto y largo plazo, plan de
+        olvido, internet (buscar y preguntar), navegador, abrir y cerrar archivos y programas, carpetas,
+        estado del sistema, listados de la biblioteca (dañados, duplicados, no compatibles, cuarentena,
+        adulterados), papelera y cuarentena (ver, vaciar, restaurar), borrar una canción, pruebas de
+        módulos, seguridad, pausar la iniciativa y novedades.
+      PRO — todo lo anterior, más lo más importante: varios comandos en una sola frase, el supervisor de
+        la biblioteca (pausar, reanudar, estado), revisar, reparar y limpiar la biblioteca (con su
+        confirmación y plan de eliminación), descargas de música y sellado del código.
+    Consultar: "en qué modo estoy" o "cuánto espacio tengo". La ventana MILLER muestra lo consumido (barra) y el disco libre y total.
+    Espacio que MILLER puede ocupar al crecer, en dos partes:
+      ASISTENTE — código, modelos y memorias.      ARCHIVOS — canciones y lo que guarde para usted.
+      FREE: 1 GB + 1 GB.      NIÑOS: 2 GB + 8 GB.
+      PRO: hasta el 90 % del espacio libre del disco que haya en ese momento; 30 % para el asistente y
+      70 % para archivos.
+    Siempre queda libre 1 GB de disco. Lo que ya existe no se borra por pasar un tope: solo se frena el crecimiento.
+    La cuota se mira al descargar y al crear la caché del ecualizador.
+
+  VOZ, SEGURIDAD Y PRUEBAS
+    Cambiar de voz — Cambia entre las voces instaladas en modelos/voces.
+        "cambia de voz"  ·  "qué voz usas"  ·  "cambia la voz"
+    Estado de la seguridad — Alertas e integridad de sus datos y de su código.
+        "estado de la seguridad"  ·  "estado de seguridad"  ·  "informe de seguridad"
+    Sellar el código — Acepta los cambios del código (con llave PRO); avisará si alguno cambia sin que usted lo diga.
+        "sella el código"  ·  "sella tu código"  ·  "sellar el código"  ·  "sella el programa"
+    Probar todos los módulos — Ejecuta las pruebas de test/.
+        "probar todos los módulos"  ·  "prueba todos los módulos"  ·  "haz las pruebas de todos los módulos"
+    Probar un módulo — Prueba solo ese módulo.
+        "prueba el reproductor"  ·  "prueba el módulo de voz"  ·  "prueba el módulo de seguridad"
+    Resultado de las pruebas — Dice cómo salieron.
+        "resultado de las pruebas"  ·  "cómo salieron las pruebas"  ·  "resultados de las pruebas"
+    Listar las pruebas — Dice qué pruebas hay.
+        "qué pruebas hay"  ·  "pruebas disponibles"  ·  "qué pruebas tengo"
+
+  ÓRDENES DE CONTEXTO (se refieren a la orden anterior, durante 5 minutos)
+    Repetir la última orden — Repite la última (nunca borra ni vacía).
+        "otra vez"  ·  "de nuevo"  ·  "repítelo"
+    Más o menos de lo último — Sigue con el volumen de la orden anterior.
+        "más"  ·  "un poco más"  ·  "menos"
+    Lo mismo en otra banda — Tras 'sube los graves', hace lo mismo con los agudos o los medios.
+        "y los agudos"  ·  "ahora los medios"  ·  "y los graves"
+    Lo mismo en otro navegador — Repite la última búsqueda en otro navegador.
+        "y en brave"  ·  "ahora en firefox"  ·  "y en chrome"
+    Sobre el último programa — Se refiere al último programa nombrado.
+        "ciérralo"  ·  "minimízalo"  ·  "maximízalo"
+
+SEGURIDAD
+  - Archivos peligrosos: MILLER nunca abre como archivo los ejecutables ni los scripts (.exe, .bat,
+    .cmd, .ps1, .vbs, .js, .msi, .reg, .lnk, .dll, .jar, .iso) ni las macros de Office (.docm,
+    .xlsm). Lo bloquea en "abre el archivo" y lo anota en datos\seguridad\alertas.log.
+  - Datos firmados: sus JSON (memoria, emociones, equilibrio, alarmas...) llevan una firma HMAC.
+    Si alguien los altera, MILLER los aparta en datos\seguridad\sospechosos y usa la copia .bak.
+  - Clave: datos\seguridad\clave.bin. No la comparta ni la borre: sin ella no se verifican las firmas.
+  - Código: "sella el código" (o el botón SELLAR de la ventana MILLER, con llave PRO) guarda la huella de sus archivos .py; si alguno cambia sin que usted
+    lo diga, MILLER lo avisa en cada arranque. La respuesta sale en la TERMINAL.
+  - Biblioteca: borrar siempre pasa por la papelera (audios\cuarentena\papelera) y la limpieza
+    pide confirmación.
+  - Procesos: nunca cierra ni minimiza programas o ventanas del sistema (escritorio, barra de
+    tareas, Windows).
+
+CREAR MILLER.exe (en este PC, con Python 3.13)
+  1. Doble clic en compilar_exe.bat. Instala las dependencias y PyInstaller, y compila con miller.spec
+     (tarda varios minutos). Se abre una consola con los mensajes del programa.
+  2. El ejecutable queda en dist\MILLER\MILLER.exe. Déjelo junto a modelos\, audios\ y datos\ de esta
+     carpeta: MILLER los busca subiendo desde dist\MILLER.
+  3. Cada compilación reemplaza la anterior de dist\MILLER.
+  4. Las pruebas de test\ solo funcionan con Python.
+
+CARPETAS
+  audio/       reproductor, fundidos, atenuación y supervisor de la biblioteca
+  cerebro/     cerebro, comandos, memoria, emociones, iniciativa, necesidades y patrones
+  voz/         escuchador, hablador, activador y conversación
+  interfaz/    ventana de la esencia y panel de interacción
+  utilidades/  sistema, internet, navegación, alarmas, calculadora, noticias, seguridad, entorno
+  test/        pruebas ("Miller, probar todos los módulos")
+  datos/       memoria, emociones, movimiento y equilibrio (firmados; alertas en datos/seguridad/alertas.log)
+  audios/      su música; audios/cuarentena/ contiene la papelera y los apartados
+  raíz          compilar_exe.bat y miller.spec (solo sirven para crear MILLER.exe)
+
+Toda la configuración está en configuracion.py.
+
