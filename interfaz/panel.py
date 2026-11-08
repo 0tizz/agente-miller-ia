@@ -644,6 +644,8 @@ class PanelInteraccion:
         def trabajo():
             from utilidades import instalador
             instalador.instalar_todo(lambda texto: self.cola.put(("bitacora", texto)))
+            # El modelo de voz se carga al arrancar: tras instalarlo, la voz se activa al reiniciar MILLER.
+            self.cola.put(("bitacora", "Instalación terminada. Reinicie MILLER para activar la voz."))
             self.cola.put(("refrescar", None))
         threading.Thread(target=trabajo, daemon=True, name="MILLER-Instalador").start()
 

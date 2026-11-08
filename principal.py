@@ -18,7 +18,8 @@ if __name__ == "__main__" and not entorno.comprobar():
 if __name__ == "__main__":
     from utilidades import instalador
     if not instalador.todo_listo():
-        print("[INSTALADOR] Faltan modelos (voz, ffmpeg). Ejecute una vez: python principal.py --instalar")
+        print("[INSTALADOR] Faltan modelos (voz, ffmpeg). Instálelos desde la página INSTALACIÓN "
+              "o con: python principal.py --instalar. MILLER sigue abierto en modo texto mientras tanto.")
 from cerebro.cerebro import Cerebro
 from voz.activador import Activador
 from voz.conversacion import Conversacion
@@ -325,6 +326,14 @@ def ejecutar_orden(cerebro, hablador, orden, iniciativa=None):
             print(f"[CEREBRO] Error procesando la orden:\n[CEREBRO] {error}")
             respuesta = "Se produjo un error inesperado al procesar la instrucción."
         responder(hablador, respuesta, en_terminal=iniciativa.adjunto_terminal() if iniciativa is not None else None)
+
+def _voz_disponible(escuchador):
+    """True si el reconocimiento local puede escuchar ya (modelo presente). Sin excepciones hacia fuera."""
+    try:
+        return bool(escuchador.esta_disponible())
+    except Exception:
+        return False
+
 
 def procesar_voz(cerebro, escuchador, hablador, activador):
     if escuchador is None:
@@ -708,11 +717,12 @@ def main():
         print("MILLER: Iniciativa activa: pediré permiso para hablar ('Miller, adelante' para autorizar).")
     print(f"MILLER: {configuracion.MENSAJE_ESPERA}\n")
     try:
-        if MODO_VOZ and escuchador is not None:
+        # Sin modelo de voz (equipo nuevo) MILLER no se cierra: sigue en modo texto hasta que se instale.
+        if MODO_VOZ and escuchador is not None and _voz_disponible(escuchador):
             procesar_voz(cerebro, escuchador, hablador, activador)
         else:
             if MODO_VOZ:
-                print("MILLER: Cambiando automáticamente a modo texto.\n")
+                print("MILLER: Voz no disponible todavía. Cambio a modo texto: instale los modelos desde la página INSTALACIÓN.\n")
             procesar_texto(cerebro, hablador)
     except KeyboardInterrupt:
         print("\nMILLER: Interrupción detectada.")
