@@ -1,4 +1,4 @@
-"""MILLER · Página INSTALACIÓN de la ventana.
+"""MILLER · Sección INSTALACIÓN (dentro de la página MILLER).
 
 Disposición (de arriba abajo):
   - Zona con desplazamiento (rueda del ratón o barra lateral): resumen, lista compacta
@@ -9,7 +9,7 @@ Disposición (de arriba abajo):
 Reglas de los botones:
   - COMPROBAR ESTADO: disponible cuando no hay trabajo en curso. Vuelve a mirar qué falta.
   - INSTALAR LO QUE FALTA (n): solo si falta algo. Sigue el plan predefinido de plan_instalacion.
-  - BUSCAR EN ESTE EQUIPO y ELEGIR CARPETA…: solo si falta algo. Buscar copia a modelos/ lo que encuentra
+  - 📂 (buscar en este equipo) y ELEGIR CARPETA…: solo si falta algo. Buscar copia a modelos/ lo que encuentra
     con nombre exacto; si copió bien, estos dos botones se ocultan y solo quedan COMPROBAR e INSTALAR.
 
 El trabajo pesado corre en hilos. Todo cambio de la ventana vuelve al hilo de la interfaz por la cola del panel.
@@ -20,6 +20,63 @@ from utilidades import instalador, plan_instalacion as plan
 
 LARGO_RUTA = 54      # caracteres de ruta que se muestran en la lista; si es más larga, se corta por delante
 ESTILO_BARRA = "MillerVerde.Vertical.TScrollbar"
+
+
+def barra_verde(padre, comando, tema):
+    """Barra de desplazamiento fina en verde (7 px), dibujada a mano: el ancho de la barra nativa de Windows
+    no se puede cambiar. Sirve para cualquier cosa con yview (lista, árbol, tarjetas, página INSTALACIÓN)."""
+    import tkinter as tk
+    try:
+        return _barra_fina(tk, padre, comando, tema)
+    except Exception:
+        return tk.Scrollbar(padre, orient="vertical", command=comando)
+
+
+def _barra_fina(tk, padre, comando, tema, ancho=7):
+    lienzo = tk.Canvas(padre, width=ancho, bg=tema["FONDO"], highlightthickness=0, bd=0)
+    est = {"a": 0.0, "b": 1.0, "arrastre": None}
+
+    def dibujar(_evento=None):
+        lienzo.delete("all")
+        alto = max(lienzo.winfo_height(), 1)
+        lienzo.create_rectangle(0, 0, ancho, alto, fill=tema["VERDE_OSCURO"], outline="")
+        y1 = int(est["a"] * alto)
+        y2 = max(int(est["b"] * alto), y1 + 16)
+        lienzo.create_rectangle(1, y1, ancho - 1, min(y2, alto), fill=tema["VERDE"], outline="")
+
+    def fijar(primera, ultima):
+        est["a"], est["b"] = float(primera), float(ultima)
+        dibujar()
+
+    def fraccion(evento):
+        return min(max(evento.y / max(lienzo.winfo_height(), 1), 0.0), 1.0)
+
+    def pulsar(evento):
+        f = fraccion(evento)
+        if est["a"] <= f <= est["b"]:
+            est["arrastre"] = f - est["a"]                  # agarra el deslizador donde se pulsó
+        else:
+            est["arrastre"] = (est["b"] - est["a"]) / 2     # salta: el deslizador se centra en el clic
+            comando("moveto", max(0.0, f - est["arrastre"]))
+
+    def mover(evento):
+        if est["arrastre"] is not None:
+            tope = max(0.0, 1.0 - (est["b"] - est["a"]))
+            comando("moveto", max(0.0, min(fraccion(evento) - est["arrastre"], tope)))
+
+    def soltar(_evento=None):
+        est["arrastre"] = None
+
+    def rueda(evento):
+        comando("scroll", -1 if evento.delta > 0 else 1, "units")
+
+    lienzo.bind("<Configure>", dibujar)
+    lienzo.bind("<Button-1>", pulsar)
+    lienzo.bind("<B1-Motion>", mover)
+    lienzo.bind("<ButtonRelease-1>", soltar)
+    lienzo.bind("<MouseWheel>", rueda)
+    lienzo.set = fijar                                      # misma interfaz que tk.Scrollbar: yscrollcommand=barra.set
+    return lienzo
 
 
 class PaginaInstalacion:
@@ -79,7 +136,7 @@ class PaginaInstalacion:
         self.b_comprobar = self.tk.Button(botones, text="COMPROBAR ESTADO", font=self.fuente, bg=f,
                                           fg=self.t["GRIS"], relief="flat", padx=4, pady=0, command=self.revisar)
         self.b_comprobar.grid(row=0, column=0, padx=(0, 3), sticky="w")
-        self.b_buscar = self.tk.Button(botones, text="BUSCAR EN ESTE EQUIPO", font=self.fuente, bg=f,
+        self.b_buscar = self.tk.Button(botones, text="📂", font=("Segoe UI Emoji", 11), bg=f,
                                        fg=self.t["AMBAR"], relief="flat", padx=4, pady=0, command=self.buscar)
         self.b_buscar.grid(row=0, column=1, padx=3, sticky="w")
         self.b_elegir = self.tk.Button(botones, text="ELEGIR CARPETA…", font=self.fuente, bg=f,
@@ -94,21 +151,7 @@ class PaginaInstalacion:
         botones.columnconfigure(3, weight=1)
 
     def _barra_verde(self, padre, comando):
-        """Barra de desplazamiento en verde sobre negro: solo carril y deslizador, sin flechas ni fondo blanco.
-        Windows pinta la barra nativa en blanco y no admite colores; por eso se usa ttk con el tema «clam»."""
-        try:
-            from tkinter import ttk
-            estilo = ttk.Style(padre)
-            estilo.theme_use("clam")
-            estilo.layout(ESTILO_BARRA, [("Vertical.Scrollbar.trough", {"sticky": "ns", "children": [
-                ("Vertical.Scrollbar.thumb", {"expand": "1", "sticky": "nswe"})]})])
-            estilo.configure(ESTILO_BARRA, background=self.t["VERDE"], troughcolor=self.t["FONDO"],
-                             bordercolor=self.t["FONDO"], lightcolor=self.t["VERDE"], darkcolor=self.t["VERDE"],
-                             borderwidth=0, relief="flat", gripcount=0)
-            estilo.map(ESTILO_BARRA, background=[("pressed", self.t["VERDE"]), ("active", self.t["VERDE"])])
-            return ttk.Scrollbar(padre, orient="vertical", command=comando, style=ESTILO_BARRA)
-        except Exception:
-            return self.tk.Scrollbar(padre, orient="vertical", command=comando)
+        return barra_verde(padre, comando, self.t)
 
     def desplazar(self, paso):
         """Lo llama el panel con la rueda del ratón cuando esta página está abierta."""

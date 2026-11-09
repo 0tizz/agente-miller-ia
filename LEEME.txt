@@ -10,10 +10,10 @@ INSTALAR
        modelos/voz/vosk-model-small-es-0.42      (reconocimiento de voz)
        modelos/ffmpeg-master-gpl/bin/ffmpeg.exe  (reparar, medir y descargar música)
        modelos/voces/es_ES-davefx-medium/        (voz masculina española)
-     La pestaña INSTALACIÓN de la ventana hace lo mismo. Verde = instalado, rojo = falta.
+     La sección INSTALACIÓN de la página MILLER hace lo mismo. Verde = instalado, rojo = falta.
      Botones (abajo, con la barra de progreso encima):
        COMPROBAR ESTADO      vuelve a mirar qué falta.
-       BUSCAR EN ESTE EQUIPO busca los modelos por nombre exacto y los copia a modelos/.
+       📂 (en este equipo)   busca los modelos por nombre exacto y los copia a modelos/.
                              Si copia bien, el botón desaparece.
        ELEGIR CARPETA…       igual, pero desde una carpeta que usted escoja.
        INSTALAR LO QUE FALTA solo se activa si falta algo; descarga lo que no esté en el equipo.
@@ -34,7 +34,7 @@ EJEMPLOS: CÓMO EJECUTAR UN COMANDO
                "y luego", "y después", "y también", o "y" entre dos verbos).
 
   Ejemplo 3 · Desde el ejecutable y escribiendo en vez de hablar
-      Doble clic en dist\MILLER\MILLER.exe  ->  botón TERMINAL de la ventana  ->  escriba:
+      Doble clic en dist\MILLER\MILLER.exe  ->  la TERMINAL, abajo a la izquierda de la página ENTORNO  ->  escriba:
           abre netflix en el navegador brave
       y pulse Enter. Lo escrito se procesa igual que lo hablado.
 
@@ -49,7 +49,7 @@ CÓMO SE COMPORTA MILLER (resumen)
   - Responde cuando oye su nombre ("Miller, ..."). Tras responder deja unos segundos en los que
     puede seguir hablándole sin repetir el nombre. "Miller, modo llamada" = conversación continua.
   - Su nombre se pone una sola vez. La primera vez, MILLER le saluda en la TERMINAL y le pide el nombre en
-    la página INSTALACIÓN de la ventana (campo y ENVIAR, o Enter). Vacío = Miller. Después no cambia; PURGAR
+    la sección INSTALACIÓN de la página MILLER (campo y ENVIAR, o Enter). Vacío = Miller. Después no cambia; PURGAR
     lo borra y, al volver a abrir, se pregunta otra vez. Sin ventana, se pregunta en la consola (Enter =
     Miller). Sin consola (el .exe sin ventana de texto) usa Miller en esa sesión y no lo guarda.
   - Aprende solo: frases que usted reformula, y palabras mal oídas (p. ej. "reprodusir" -> "reproducir");
@@ -64,7 +64,7 @@ CÓMO SE COMPORTA MILLER (resumen)
     pero nunca lo ejecuta solo.
 
 LA VENTANA DE LA ESENCIA
-  Arriba: "MILLER" y el TAMAÑO del programa. En el centro: sus pensamientos cayendo en cascada,
+  Arriba: la barra de páginas (MILLER, ENTORNO) con la fecha y la hora de 12 horas a la derecha. El TAMAÑO del programa está en la página MILLER. En el centro: sus pensamientos cayendo en cascada,
   el orbe (late y cambia de color según su emoción) y TRES CÍRCULOS de necesidades:
       PLACER  (abajo izquierda)  disfrutar: música que suena, canciones pedidas, elogios.
       ORÁCULO (arriba)           alimentar el yo: preguntas a internet, noticias, órdenes que
@@ -118,14 +118,49 @@ LA VENTANA DE LA ESENCIA
   estable, y se apaga a verde oscuro cuando está desequilibrado (solo cambia color y luz).
   Las repercusiones van a sus emociones: satisfacción en equilibrio; aburrimiento, curiosidad o
   tristeza cuando le falta placer, oráculo o vínculo (suavizadas por la tolerancia).
-  Abajo: TERMINAL (conversación y casilla para escribir órdenes), INSTALACIÓN (se marca con
-  "!" si falta algo) y MILLER (perfil y plan arriba, con PURGAR y SELLAR; debajo, la barra de espacio
+  Abajo: MILLER (se marca con "!" si falta algo) y
+  ENTORNO. La TERMINAL (conversación y casilla para escribir órdenes) está en la columna izquierda de ENTORNO, abajo. INSTALACIÓN es una sección de la página MILLER, arriba de las llaves: ya no es una ventana aparte.
+  MILLER tiene el perfil y el plan arriba, con PURGAR, SELLAR y ENTORNO; debajo, la barra de espacio
   y dos tarjetas de llave, con desplazamiento si no caben. El botón se marca con "●" si hay una llave puesta).
+  ENTORNO es la cuarta página del panel (su botón, o ENTORNO en la página MILLER). Es el explorador de
+  archivos de MILLER, al estilo del Explorador de Windows, dentro de la misma ventana.
+  Arriba: atrás, adelante, subir, actualizar, la dirección y Buscar. Nueva carpeta, cortar, copiar, pegar, nombre,
+  eliminar y propiedades están en el clic derecho y en los atajos (no hay barra de operaciones). El árbol de la
+  izquierda se despliega con un clic en la carpeta. Ordenar: pulse el título de una columna. Selección múltiple con Ctrl o Mayús.
+  MILLER muestra dos discos:
+    · Disco local (C:): la carpeta de MILLER con el programa, los modelos y los datos (salvo audios).
+      Para entrar y hacer cualquier cosa necesita las DOS llaves, PRO y NIÑOS. Sin ellas aparece bloqueado.
+    · Archivos de MILLER: los archivos de audios, divididos en secciones globales: Biblioteca musical
+      (mp3, wav, ogg, flac), Documentos (pdf, Word, Excel, PowerPoint, txt...), Vídeos (mp4, mkv, avi...) y
+      Otros archivos (solo si hay algo que no encaja). Las secciones son vistas: los archivos siguen en su
+      carpeta real y no se renombran, borran ni pegan dentro de una sección. Se ven sin llave.
+  Modificar (nueva carpeta, copiar y pegar, cortar, cambiar nombre, eliminar) necesita la llave PRO; sin ella
+  es solo lectura. Eliminar mueve a datos\papelera_explorador, así que se recupera. Lo que MILLER está sonando
+  o tiene en la cola no se mueve ni se borra.
+  BIBLIOTECA MUSICAL en tarjetas: cada canción tiene Reproducir, A la cola (o Quitar cola si ya está en la cola),
+  Copiar y Papelera. Clic la selecciona, Ctrl y Mayús la añaden o marcan un rango, doble clic la reproduce y el
+  clic derecho abre el menú. La papelera de una canción pasa por el supervisor de MILLER (la misma que «borra …»):
+  nunca se borra de golpe y se recupera con «restaura <nombre>». Las respuestas van a la terminal.
+  En el resto de carpetas, Eliminar sigue moviendo a datos\papelera_explorador. datos\seguridad se ve, pero no se abre ni se copia; datos se mira:
+  no se renombra, no se copia y no se borra desde aquí.
+  Atajos: Intro abre; Retroceso sube; F2 cambia el nombre; Supr elimina; Ctrl+C, Ctrl+X y Ctrl+V copian, cortan
+  y pegan; Alt+Intro muestra las propiedades con los tamaños exactos; F5 actualiza; Ctrl+L va a la dirección;
+  Ctrl+F busca. Escribir letras salta al primer elemento que empieza así.
+  Ventana: las páginas (MILLER, ENTORNO) ocupan toda la zona de la ventana. La ventana MILLER tiene tamaño
+  fijo: configuracion.INTERFAZ_ANCHO (640) y INTERFAZ_ALTO_PANEL (460). Sin página
+  abierta se ve la cascada de palabras con el orbe. Si nadie toca la ventana durante un rato, la página se cierra
+  sola y vuelve el fondo (salvo que haya una copia en marcha). Medidas en configuracion.py: INTERFAZ_ANCHO,
+  INTERFAZ_ALTO_PANEL e INTERFAZ_INACTIVIDAD_S (segundos; 0 = nunca).
+  El orbe: vive en la cascada de palabras, como siempre. No desaparece cuando entra en un círculo que llena:
+  se queda a la vista sobre él. Lo mueve su cerebro, se pinta encima del fondo y
+  no se mueve entre las ventanas. Cuando siente la necesidad de llenar un círculo (placer, oráculo o vínculo) y
+  entra en él, desaparece hasta que ese círculo está casi lleno; así se ve cómo se llena. Aprende de su entorno
+  (tiempo activo, música, hora, páginas que abre y eventos del entorno: carpetas, canciones y archivos que copia, mueve, borra o renombra) y lo guarda firmado en datos\orbe.json.
   Cerrar la ventana apaga MILLER. Se desactiva con INTERFAZ_ACTIVA = False.
 
 LISTA DE COMANDOS DISPONIBLES
   Cada orden tiene tres formas distintas que MILLER entiende (todas probadas). Diga "Miller," delante,
-  o escríbalas en el TERMINAL de la ventana. Las palabras "sol", "luna", "brave" o "informe.pdf" son
+  o escríbalas en la TERMINAL de ENTORNO. Las palabras "sol", "luna", "brave" o "informe.pdf" son
   ejemplos: cámbielas por su canción, programa o archivo.
 
   CONVERSACIÓN E IDENTIDAD
@@ -411,7 +446,8 @@ LISTA DE COMANDOS DISPONIBLES
     está lista. Una canción nueva espera hasta 3 segundos su copia para empezar ya ecualizada.
 
   MODOS, LLAVES Y ESPACIO
-    MILLER arranca siempre en modo FREE y no conserva llaves de una sesión a otra.
+    Las llaves puestas se recuerdan: al reabrir MILLER siguen puestas hasta que las retire. La llave en claro
+    nunca se guarda; se guarda solo qué casillas están puestas, firmado (datos\seguridad\llaves_puestas.json).
     Hay tres niveles: FREE (sin llave, completo para el uso diario), NIÑOS (llave BOY) y PRO (llave PRO, el
     desbloqueo total).
     LLAVE 1 · NIÑOS (boy): es de código abierto y no se compra. Se pone en «ingresa clave boy» o con
@@ -437,7 +473,18 @@ LISTA DE COMANDOS DISPONIBLES
     La barra de espacio muestra lo que ocupa MILLER (asistente más archivos) frente al tope total del modo
     que manda. MILLER mide el disco al abrir la página MILLER y después cada 5 segundos mientras esa página
     esté abierta. Con la página abierta, al poner o quitar una llave el tope cambia en menos de un segundo;
-    lo ocupado cambia en la medición siguiente.
+    lo ocupado cambia en la medición siguiente. Debajo de la barra aparece cuánto queda libre en el plan.
+    El total del disco ya no se muestra: solo cuenta el plan de la llave que manda.
+
+    BARRA DEL REPRODUCTOR: abajo de la ventana MILLER, en todas sus páginas, va la canción que suena, su tiempo
+    (transcurrido / total), el volumen y una barra de progreso. Una sola fila de botones compactos: <<, Pausa
+    (dice Seguir si está pausada o Play si no suena nada), >>, Parar, Vol-, Vol+, Aleat., Repetir (se enciende
+    en verde cuando está activo) y Mudo (o Reactivar). Cada botón hace lo mismo que su orden de voz (Repetir es
+    «repite la canción») y su respuesta sale solo en la terminal, como «MILLER: ...»; la barra no escribe texto
+    propio. La duración la mide ffmpeg en segundo plano la primera vez que suena cada canción; hasta entonces
+    aparece sin el total. Los botones no esperan al audio.
+    PURGAR es un reestablecimiento de fábrica: además olvida el historial de órdenes de la terminal
+    (datos\terminal_historial.json) y las llaves puestas; al reabrir MILLER hay que volver a ponerlas, una sola vez.
     PURGAR (dos pulsaciones en 6 segundos) hace que MILLER se despida en voz alta, funda la música hasta el
     silencio y solo después cierre la ventana; al cerrarse, borra recuerdos, aprendizaje y cachés: memoria, memoria musical, nombre del asistente,
     emociones, equilibrio, iniciativa, movimiento, índice de aplicaciones, estado e informe del supervisor,
@@ -533,3 +580,10 @@ CARPETAS
 
 Toda la configuración está en configuracion.py.
 
+ENTORNO · COLA, TERMINAL Y MENSAJES (novedades)
+  - Botón COLA (fijo arriba, en la biblioteca musical; activo mientras haya canciones en cola): muestra la cola en orden. ▲ y ▼ cambian una canción
+    de puesto, ▶ la pone a sonar ahora y ✕ la quita. VACIAR COLA borra toda la cola. Son las mismas órdenes
+    que por voz; su respuesta sale en la TERMINAL.
+  - Los mensajes de ENTORNO (al abrir, copiar, pegar, renombrar o borrar) salen en la TERMINAL,
+    con «Afirmativo» o «Negativo» y «señor».
+  - Un disco bloqueado muestra ⛔ en el árbol, en vez de la palabra «(bloqueado)».

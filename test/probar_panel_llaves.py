@@ -308,7 +308,7 @@ p.lienzo_llaves.desplazado = None
 p._rueda_llaves(types.SimpleNamespace(delta=-120))
 comprobar(p.lienzo_llaves.desplazado is None, "con la página cerrada la rueda no mueve nada")
 
-print("13. Primera vez: el nombre se pone en la página INSTALACIÓN (saludo, ENVIAR, Enter; vacío = Miller)")
+print("13. Primera vez: el nombre se pone en la sección INSTALACIÓN de la página MILLER (saludo, ENVIAR, Enter; vacío = Miller)")
 
 
 def arrancar_panel(ruta):
@@ -334,7 +334,7 @@ def atender(q, segundos=5.0):
 q1, lineas1 = arrancar_panel(TEMPORAL / "nombre_primera_vez.json")
 comprobar(q1.nombre_pendiente, "sin nombre guardado, el panel sabe que es la primera vez")
 atender(q1)
-comprobar(q1.actual == "instalacion", "la primera vez se abre sola la página INSTALACIÓN")
+comprobar(q1.actual == "llaves", "la primera vez se abre sola la página MILLER, con la sección INSTALACIÓN")
 comprobar(q1.bloque_nombre.visible, "y en ella se ve el campo del nombre")
 comprobar(any("Buenas, señor" in linea for linea in lineas1), "MILLER saluda en la TERMINAL")
 q1.entrada_nombre.valor = "M1"

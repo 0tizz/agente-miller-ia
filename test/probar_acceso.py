@@ -22,6 +22,7 @@ def comprobar(condicion, mensaje):
 
 
 import configuracion
+import importlib
 from utilidades import acceso, cuota
 
 MB = 1024 * 1024
@@ -164,6 +165,33 @@ comprobar(0 < libre <= total, "se lee el espacio libre y total del disco")
 resumen = cuota.resumen()
 comprobar("Disco:" in resumen and "GB libres de" in resumen, "el resumen informa del disco libre")
 comprobar("Asistente:" in resumen and "archivos:" in resumen, "el resumen mantiene las cuotas de ambas secciones")
+
+def reabrir():
+    """Simula cerrar y volver a abrir MILLER. Los ayudantes de prueba cambian la huella PRO en memoria:
+    se conserva al recargar el módulo."""
+    sal, huella = acceso.SAL_PRO, acceso.HUELLA_PRO
+    importlib.reload(acceso)
+    acceso.SAL_PRO, acceso.HUELLA_PRO = sal, huella
+
+
+print("N. Las llaves puestas persisten al reabrir MILLER")
+acceso.quitar(None)
+acceso.poner(None, claros["boy"])
+comprobar(acceso.modo() == "boy", "con la llave BOY puesta el modo es NIÑOS")
+reabrir()
+comprobar(acceso.activas() == frozenset({"boy"}) and acceso.modo() == "boy", "al reabrir, la llave BOY sigue puesta")
+acceso.poner(None, claros["pro"])
+reabrir()
+comprobar(acceso.activas() == frozenset({"boy", "pro"}) and acceso.modo() == "pro", "al reabrir, las dos llaves siguen puestas")
+acceso.quitar("pro")
+reabrir()
+comprobar(acceso.activas() == frozenset({"boy"}), "una llave retirada no vuelve al reabrir")
+acceso.quitar(None)
+reabrir()
+comprobar(acceso.activas() == frozenset() and acceso.modo() == "free", "sin llaves retiradas, al reabrir sigue FREE")
+texto_puestas = (TEMPORAL / "seguridad" / "llaves_puestas.json").read_text(encoding="utf-8")
+comprobar(claros["boy"].replace("-", "") not in texto_puestas and claros["pro"].replace("-", "") not in texto_puestas,
+          "el fichero de llaves puestas no guarda ninguna llave en claro")
 
 shutil.rmtree(TEMPORAL, ignore_errors=True)
 print()

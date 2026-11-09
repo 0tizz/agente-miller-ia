@@ -422,6 +422,23 @@ class Reproductor:
             return float(r["rms"])
         except (KeyError, TypeError, ValueError):
             return None
+    def posicion_segundos(self):
+        """Segundos reproducidos de la canción actual. Solo lectura: no toma el candado del reproductor."""
+        if self.cancion_actual is None:
+            return 0.0
+        return float(self._calcular_tiempo_actual())
+
+    def duracion_segundos(self):
+        """Duración de la canción actual. ffmpeg la mide en segundo plano una vez por archivo; hasta entonces da None."""
+        actual = self.cancion_actual
+        if actual is None:
+            return None
+        try:
+            from utilidades import duracion
+            return duracion.duracion_de(actual, self._ruta_ffmpeg())
+        except Exception:
+            return None
+
     def _ruta_ffmpeg(self):
         if getattr(self, "_ffmpeg", "?") != "?":
             return self._ffmpeg
@@ -937,6 +954,24 @@ class Reproductor:
                 return False
             print(f"[ AUDIO ] ➕ Cola ({len(self.cola)}): {p.name}")
             return True
+    def mover_en_cola(self, posicion, destino):
+        """Cambia de puesto una canción de la cola (1 = la siguiente). Si no puede guardar, lo deshace."""
+        try:
+            i, j = int(posicion) - 1, int(destino) - 1
+        except (TypeError, ValueError):
+            return False
+        with self._lock:
+            if i == j or not (0 <= i < len(self.cola) and 0 <= j < len(self.cola)):
+                return False
+            p = self.cola.pop(i)
+            self.cola.insert(j, p)
+            if not self.guardar_memoria_musical():
+                self.cola.pop(j)
+                self.cola.insert(i, p)
+                return False
+            print(f"[ AUDIO ] ↕ Cola: {p.name} pasa al puesto {j + 1}")
+            return True
+
     def eliminar_de_cola(self, posicion):
         try:
             i = int(posicion) - 1

@@ -1,4 +1,4 @@
-"""MILLER · Panel bajo la esencia: páginas TERMINAL, INSTALACIÓN y MILLER (perfil, plan, espacio, llaves y acciones).
+"""MILLER · Panel bajo la esencia: páginas TERMINAL, MILLER (perfil, plan, espacio, llaves, INSTALACIÓN y acciones) y ENTORNO.
 Cada página solo se ve si se abre."""
 import queue
 import re
@@ -7,17 +7,19 @@ import time
 
 import configuracion
 from utilidades import nombre as nombre_asistente
-from interfaz.instalacion_ui import PaginaInstalacion
+from interfaz.instalacion_ui import PaginaInstalacion, barra_verde
 
 VERDE, VERDE_OSCURO, GRIS, ROJO, FONDO = "#2ee86a", "#0b2a12", "#5f8f6a", "#ff7a5a", "#000000"
 AMBAR = "#ffc857"
 TEMA_INSTALACION = {"VERDE": VERDE, "VERDE_OSCURO": VERDE_OSCURO, "GRIS": GRIS, "ROJO": ROJO, "FONDO": FONDO,
                     "AMBAR": AMBAR}
 TARJETA_LIBRE, TARJETA_PUESTA = "#070d09", "#0d4a22"
-FUENTE, FUENTE_NEGRITA = ("Consolas", 8), ("Consolas", 8, "bold")
-FUENTE_TITULO = ("Consolas", 11, "bold")
-ALIAS = {"registro": "terminal"}                      # nombre antiguo de la página
-BOTONES = (("terminal", "TERMINAL"), ("instalacion", "INSTALACIÓN"), ("llaves", "MILLER"))
+FUENTE, FUENTE_NEGRITA = ("Consolas", 9), ("Consolas", 9, "bold")
+FUENTE_TITULO = ("Consolas", 12, "bold")
+ALIAS = {"registro": "explorador", "terminal": "explorador", "instalacion": "llaves"}      # nombres antiguos: INSTALACIÓN vive dentro de MILLER
+INSTALACION_ALTO = 250                           # px de la sección INSTALACIÓN dentro de la página MILLER
+BOTONES = (("llaves", "MILLER"),
+           ("explorador", "ENTORNO"))
 PLANES = (("boy", "NIÑOS"), ("pro", "PRO"))
 NOMBRE_PLAN = {"free": "FREE", "boy": "NIÑOS", "pro": "PRO"}
 DESCRIPCION_PLAN = {
@@ -77,10 +79,12 @@ class PanelInteraccion:
     Las respuestas de los botones y de las llaves van a la TERMINAL, nunca a la ventana MILLER."""
     MAX_LINEAS = 200
 
-    def __init__(self, tk, raiz, ancho, alto, al_enviar=None, al_redimensionar=None, al_cerrar=None, al_purgar=None):
+    def __init__(self, tk, raiz, ancho, alto, al_enviar=None, al_redimensionar=None, al_cerrar=None, al_purgar=None,
+                 zona=None, en_uso=None, comandos=None):
         self.tk, self.raiz = tk, raiz
         self.al_enviar, self.al_redimensionar, self.al_cerrar = al_enviar, al_redimensionar, al_cerrar
         self.al_purgar = al_purgar          # la purga pide cerrar MILLER SIN cerrar la ventana todavía
+        self._en_uso = en_uso if callable(en_uso) else (lambda: set())   # rutas que MILLER está usando
         self.cola = queue.Queue()
         self.historial, self.pos_historial = _leer_historial(), 0
         self._borrador = ""                                    # lo escrito antes de empezar a subir por el historial
@@ -109,12 +113,40 @@ class PanelInteraccion:
                           command=lambda c=clave: self.alternar(c))
             b.pack(side="left", padx=4, pady=2)
             self.botones[clave] = b
+        # Fecha y hora de 12 horas, a la derecha de la barra de páginas.
+        self.etiqueta_reloj = tk.Label(barra, font=FUENTE_NEGRITA, bg=FONDO, fg=GRIS)
+        self.etiqueta_reloj.pack(side="right", padx=6, pady=2)
+        self._pintar_reloj()
         # Contenedor de páginas: solo se empaqueta cuando hay una abierta.
-        self.marco = tk.Frame(raiz, bg=FONDO, width=ancho, height=alto, highlightthickness=1,
+        self.marco = tk.Frame(zona if zona is not None else raiz, bg=FONDO, width=ancho, height=alto,
+                              highlightthickness=1,
                               highlightbackground=VERDE_OSCURO)
         self.marco.pack_propagate(False)
-        self.paginas = {"terminal": self._pagina_terminal(), "instalacion": self._pagina_instalacion(),
-                        "llaves": self._pagina_llaves()}
+        # Barra del reproductor: fija abajo de la ventana MILLER. Va empaquetada antes que las páginas.
+        self.comandos = comandos                  # órdenes de voz: la barra y la biblioteca las usan
+        self.barra_reproductor = None
+        self._audio = self._acciones_audio()          # un solo AccionesAudio: lo usan la barra y ENTORNO
+        try:
+            from interfaz.barra_reproductor import BarraReproductor
+            self.barra_reproductor = BarraReproductor(
+                self.tk, self.marco, comandos, raiz,
+                informar=self._informar_desde_hilo, acciones=self._audio)
+        except Exception as error:
+            print(f"[PANEL] Barra del reproductor no disponible: {error}")
+        self._explorador = None                        # ENTORNO (con la TERMINAL dentro) se monta al arrancar
+        self.paginas = {"llaves": self._pagina_llaves(), "explorador": self._pagina_explorador()}
+        self._montar_explorador()
+        try:
+            self._inactividad_s = max(0.0, float(getattr(configuracion, "INTERFAZ_INACTIVIDAD_S", 120)))
+        except (TypeError, ValueError):
+            self._inactividad_s = 120.0
+        self._ultima_actividad = time.monotonic()      # cualquier tecla o clic en la ventana lo renueva
+        self.aprendiz = None                           # lo que aprende el orbe (lo crea la esencia)
+        self.marco.bind_all("<Key>", self._marcar_actividad, add="+")
+        self.marco.bind_all("<Button>", self._marcar_actividad, add="+")
+        self.marco.bind_all("<MouseWheel>", self._marcar_actividad, add="+")
+        self.marco.bind_all("<Motion>", self._marcar_movimiento, add="+")
+        self.marco.after(1000, self._vigilar_inactividad)
         self.actual = None
         if self.nombre_pendiente:                      # saluda en la TERMINAL y abre la página del nombre
             self.registrar("MILLER", configuracion.MENSAJE_SALUDO_PRIMERA_VEZ)
@@ -132,8 +164,8 @@ class PanelInteraccion:
         t.configure(state="disabled")
         return t
 
-    def _pagina_terminal(self):
-        marco = self.tk.Frame(self.marco, bg=FONDO)
+    def _montar_terminal(self, marco):
+        """La TERMINAL (conversación y casilla) dentro de 'marco': la columna izquierda de ENTORNO."""
         fila = self.tk.Frame(marco, bg=FONDO)
         fila.pack(side="bottom", fill="x", padx=4, pady=(0, 3))
         self.tk.Label(fila, text=">", font=FUENTE_NEGRITA, bg=FONDO, fg=VERDE).pack(side="left")
@@ -148,10 +180,15 @@ class PanelInteraccion:
                        command=self._enviar).pack(side="left")
         self.terminal = self._texto(marco, 10)
         self.terminal.pack(fill="both", expand=True, padx=4, pady=2)
-        return marco
 
-    def _pagina_instalacion(self):
-        marco = self.tk.Frame(self.marco, bg=FONDO)
+    def _seccion_instalacion(self, padre):
+        """INSTALACIÓN es una sección de la página MILLER, no una ventana aparte: va arriba de las tarjetas."""
+        seccion = self.tk.Frame(padre, bg=FONDO)
+        seccion.pack(side="top", fill="x", padx=4, pady=(4, 2))
+        self.tk.Label(seccion, text="INSTALACIÓN", font=FUENTE_NEGRITA, bg=FONDO, fg=VERDE, anchor="w").pack(fill="x")
+        marco = self.tk.Frame(seccion, bg=FONDO, height=INSTALACION_ALTO)
+        marco.pack_propagate(False)
+        marco.pack(side="top", fill="x")
         # Nombre del asistente: solo la primera vez; se quita en cuanto queda fijado.
         self.bloque_nombre = self.tk.Frame(marco, bg=FONDO, highlightthickness=1, highlightbackground=AMBAR)
         self.tk.Label(self.bloque_nombre, text=configuracion.MENSAJE_SALUDO_PRIMERA_VEZ, font=FUENTE, bg=FONDO,
@@ -173,10 +210,55 @@ class PanelInteraccion:
                       fg=GRIS).pack(anchor="w", padx=4, pady=(0, 2))
         if self.nombre_pendiente:
             self.bloque_nombre.pack(fill="x", padx=4, pady=(4, 2))
-        # Componentes, botones, barras de progreso y bitácora: los lleva la página de instalación.
+        # Componentes, botones, barras de progreso y bitácora: los lleva la sección.
         self.inst = PaginaInstalacion(self, marco, TEMA_INSTALACION, FUENTE, FUENTE_NEGRITA)
         self.bitacora = self.inst.bitacora
-        return marco
+        return seccion
+
+    def _pintar_reloj(self):
+        """Fecha y hora (12 horas, a. m. / p. m.) en la barra de páginas. Se repinta cada segundo."""
+        from datetime import datetime
+        from utilidades.reloj import hora_12
+        try:
+            ahora = datetime.now()
+            self.etiqueta_reloj.configure(text=f"{ahora:%d/%m/%Y}  {hora_12(ahora)}")
+            self.raiz.after(1000, self._pintar_reloj)
+        except Exception:
+            pass
+
+    def mostrar_tamano(self, texto):
+        """Tamaño del programa, dentro de la página MILLER. Lo mide la ventana principal (hilo de Tk)."""
+        try:
+            self.etiqueta_tamano.configure(text="TAMAÑO " + str(texto))
+        except Exception:
+            pass
+
+    def _cambio_audio_desde_hilo(self):
+        """Desde el hilo de una orden de audio: la ventana repinta la cola en su hilo, sin esperar."""
+        self.cola.put(("ui", self._refrescar_entorno))
+
+    def _refrescar_entorno(self):
+        if self._explorador is not None:
+            try:
+                self._explorador.refrescar_cola()
+            except Exception as error:
+                print(f"[ENTORNO] No pude repintar la cola: {error}")
+
+    def _informar_entorno(self, texto):
+        """Mensajes de ENTORNO (explorador y cola): van a la terminal, como las órdenes de voz. Desde cualquier hilo."""
+        self.cola.put(("ui", lambda t=texto: self.registrar("ENTORNO", t)))
+
+    def _registrar_evento(self, tipo):
+        """Un evento del entorno (carpeta abierta, canción puesta, archivo borrado...): lo aprende el orbe."""
+        if self.aprendiz is not None:
+            try:
+                self.aprendiz.registrar_evento(tipo)
+            except Exception:
+                pass
+
+    def _pagina_explorador(self):
+        """Página EXPLORADOR: el explorador de archivos de MILLER dentro de la ventana (se monta al abrirla)."""
+        return self.tk.Frame(self.marco, bg=FONDO)
 
     def _pagina_llaves(self):
         """Página MILLER. Arriba: el perfil (avatar y plan) y las acciones PURGAR y SELLAR. Debajo: la única barra
@@ -194,6 +276,9 @@ class PanelInteraccion:
         self.tk.Label(cabecera_texto, text="MILLER", font=FUENTE_TITULO, bg=FONDO, fg=VERDE, anchor="w").pack(fill="x")
         self.plan_llave = self.tk.Label(cabecera_texto, text="", font=FUENTE_NEGRITA, bg=FONDO, fg=VERDE, anchor="w")
         self.plan_llave.pack(fill="x")
+        self.etiqueta_tamano = self.tk.Label(cabecera_texto, text="TAMAÑO midiendo…", font=FUENTE, bg=FONDO,
+                                             fg=GRIS, anchor="w")
+        self.etiqueta_tamano.pack(fill="x")
         self.boton_purgar = self.tk.Button(acciones, text="PURGAR", width=10, font=FUENTE_NEGRITA, bg=VERDE_OSCURO,
                                            fg=VERDE, activebackground=VERDE, activeforeground=FONDO, relief="flat",
                                            bd=0, cursor="hand2", command=self._pulsar_purgar)
@@ -202,6 +287,10 @@ class PanelInteraccion:
                                            fg=VERDE, activebackground=VERDE, activeforeground=FONDO, relief="flat",
                                            bd=0, cursor="hand2", command=self._pulsar_sellar)
         self.boton_sellar.pack(fill="x")
+        self.boton_archivos = self.tk.Button(acciones, text="ENTORNO", width=10, font=FUENTE_NEGRITA, bg=VERDE_OSCURO,
+                                             fg=VERDE, activebackground=VERDE, activeforeground=FONDO, relief="flat",
+                                             bd=0, cursor="hand2", command=self._abrir_explorador)
+        self.boton_archivos.pack(fill="x", pady=(2, 0))
         self.descripcion_llave = self.tk.Label(marco, text="", font=FUENTE, bg=FONDO, fg=GRIS, anchor="w",
                                                justify="left", wraplength=318)
         self.descripcion_llave.pack(side="top", fill="x", padx=6, pady=(2, 0))
@@ -219,11 +308,12 @@ class PanelInteraccion:
         zona = self.tk.Frame(marco, bg=FONDO)
         zona.pack(side="top", fill="both", expand=True, padx=4, pady=(0, 4))
         self.lienzo_llaves = self.tk.Canvas(zona, bg=FONDO, highlightthickness=0, bd=0)
-        self.barra_llaves = self.tk.Scrollbar(zona, orient="vertical", command=self.lienzo_llaves.yview)
+        self.barra_llaves = barra_verde(zona, self.lienzo_llaves.yview, TEMA_INSTALACION)
         self.lienzo_llaves.configure(yscrollcommand=self.barra_llaves.set)
         self.barra_llaves.pack(side="right", fill="y")
         self.lienzo_llaves.pack(side="left", fill="both", expand=True)
         self.interior_llaves = self.tk.Frame(self.lienzo_llaves, bg=FONDO)
+        self._seccion_instalacion(self.interior_llaves)       # INSTALACIÓN: una sección arriba de las tarjetas
         self._ventana_llaves = self.lienzo_llaves.create_window((0, 0), window=self.interior_llaves, anchor="nw")
         self.interior_llaves.bind("<Configure>", self._ajustar_scroll_llaves)
         self.lienzo_llaves.bind("<Configure>", self._ajustar_ancho_llaves)
@@ -235,6 +325,44 @@ class PanelInteraccion:
             tarjeta["marco"].pack(fill="x", padx=4, pady=(2, 4))
             self._tarjetas[plan] = tarjeta
         return marco
+
+    def _informar_reproductor(self, texto):
+        """Respuesta de un control (barra o biblioteca): queda en la terminal igual que una orden de voz."""
+        self.registrar("MILLER", texto)
+        if getattr(self, "actual", None) == "explorador" and self._explorador is not None:
+            self._explorador.recargar()          # la cola o la papelera pueden haber cambiado la lista
+
+    def _informar_desde_hilo(self, texto):
+        """Desde otro hilo: la respuesta llega a la ventana por la cola y se escribe en su hilo."""
+        self.cola.put(("ui", lambda: self._informar_reproductor(texto)))
+
+    def _acciones_audio(self):
+        from interfaz.acciones_audio import AccionesAudio
+        return AccionesAudio(self.comandos, informar=self._informar_desde_hilo, aprender=self._registrar_evento,
+                             cambio=self._cambio_audio_desde_hilo)
+
+    def _abrir_explorador(self):
+        """El botón ENTORNO de la página MILLER abre la página ENTORNO (el explorador de archivos)."""
+        self.mostrar("explorador")
+
+    def _montar_explorador(self):
+        """Monta ENTORNO al arrancar: el explorador y la TERMINAL en su columna izquierda (se ve al abrir la página)."""
+        try:
+            from interfaz.explorador import ExploradorArchivos
+            self._explorador = ExploradorArchivos(self.paginas["explorador"], configuracion.RUTA_BASE,
+                                                  TEMA_INSTALACION, FUENTE, en_uso=self._en_uso,
+                                                  audio=self._audio, aprender=self._registrar_evento,
+                                                  panel_terminal=self._montar_terminal,
+                                                  informar=self._informar_entorno)
+        except Exception as error:
+            print(f"[PANEL] ENTORNO no disponible: {error}")
+
+    def _mostrar_explorador(self):
+        """Al abrir ENTORNO: se actualiza el contenido (el explorador ya está montado)."""
+        if self._explorador is None:
+            print("[PANEL] ENTORNO no está montado")
+            return
+        self._explorador.al_mostrar()
 
     def _crear_tarjeta(self, padre, plan, nombre, numero):
         """Tarjeta compacta, una sola fila. Sin llave: «ingresa clave boy», la casilla y ENVIAR. Con la llave correcta,
@@ -281,14 +409,40 @@ class PanelInteraccion:
 
     def _rueda_llaves(self, evento, paso=None):
         """Rueda del ratón (o botones 4 y 5 en Linux): desplaza la página abierta si tiene zona con desplazamiento."""
-        if self.actual not in ("llaves", "instalacion"):
+        if self.actual != "llaves":
             return
         if paso is None:
             paso = -1 if evento.delta > 0 else 1
-        if self.actual == "llaves":
-            self.lienzo_llaves.yview_scroll(paso, "units")
-        else:
-            self.inst.desplazar(paso)
+        self.lienzo_llaves.yview_scroll(paso, "units")
+
+    def segundos_sin_actividad(self):
+        return time.monotonic() - self._ultima_actividad
+
+    def _marcar_actividad(self, _evento=None):
+        self._ultima_actividad = time.monotonic()
+
+    def _marcar_movimiento(self, evento=None):
+        """El movimiento del ratón cuenta solo si ocurre dentro de la página abierta."""
+        try:
+            if str(evento.widget).startswith(str(self.marco)):
+                self._ultima_actividad = time.monotonic()
+        except Exception:
+            pass
+
+    def _pagina_ocupada(self):
+        """Hay algo en marcha que no se debe cortar (una copia, un pegado): la página no se cierra sola."""
+        return self.actual == "explorador" and self._explorador is not None and self._explorador.ocupado()
+
+    def _vigilar_inactividad(self):
+        """Si nadie toca la ventana durante INTERFAZ_INACTIVIDAD_S, la página se cierra y vuelve el fondo."""
+        try:
+            if (self.actual is not None and self._inactividad_s > 0
+                    and time.monotonic() - self._ultima_actividad > self._inactividad_s
+                    and not self._pagina_ocupada()):
+                self.mostrar(None)
+            self.marco.after(1000, self._vigilar_inactividad)
+        except Exception:
+            pass
 
     def alternar(self, clave):
         """Un clic abre la página; otro clic en el mismo botón la cierra (solo quedan los botones)."""
@@ -302,30 +456,40 @@ class PanelInteraccion:
         if self.actual:
             self.paginas[self.actual].pack_forget()
         if clave is None:
-            self.marco.pack_forget()
+            self.marco.place_forget()
         else:
-            self.marco.pack(fill="x")
-            self.paginas[clave].pack(fill="both", expand=True)
+            self.marco.place(x=0, y=0, relwidth=1, relheight=1)     # la página ocupa la zona; sin página se ve la cascada
+            self.marco.lift()
+            self._ultima_actividad = time.monotonic()
+            self.paginas[clave].pack(fill="both", expand=True)     # la página va primero: nada del orbe la deja vacía
+            self._registrar_pagina(clave)
         self.actual = clave
         self._pintar_botones()
-        if clave == "instalacion":
+        if clave == "llaves":
             self.actualizar_estado()
             if self.nombre_pendiente:
                 self.entrada_nombre.focus_set()
-        elif clave == "llaves":
             self._pintar_llaves()
             self._medir_disco()
             self._ajustar_zona_llaves()
-        elif clave == "terminal":
-            self.entrada.focus_set()
+        elif clave == "explorador":
+            self._mostrar_explorador()
         if callable(self.al_redimensionar):
             self.al_redimensionar()
+
+    def _registrar_pagina(self, clave):
+        """Lo que MILLER aprende: qué página se abre. Un fallo aquí nunca deja la página vacía."""
+        try:
+            if self.aprendiz is not None:
+                self.aprendiz.registrar_pagina(clave)
+        except Exception as error:
+            print(f"[INTERFAZ] Aprendizaje de página: {error}")
 
     def _pintar_botones(self):
         nombres = dict(BOTONES)
         for nombre, boton in self.botones.items():
             activo = nombre == self.actual
-            alerta = bool(nombre == "instalacion" and (self.faltan or self.nombre_pendiente))
+            alerta = bool(nombre == "llaves" and (self.faltan or self.nombre_pendiente))
             texto = nombres[nombre] + (" !" if alerta else "")
             if nombre == "llaves" and self._hay_llaves:
                 texto += " ●"                          # hay alguna llave puesta: MILLER trabaja con potencia
@@ -537,7 +701,7 @@ class PanelInteraccion:
         self.espacio_texto.configure(text=f"Consumido ({NOMBRE_PLAN[modo]}): {_tamano(usado)} de {_tamano(tope)} · "
                                           f"{round(fraccion * 100)} %")
         self._dibujar_barra(self.espacio_barra, fraccion, color)
-        self.disco_llave.configure(text=f"Disco: {_tamano(s['libre'])} libres de {_tamano(s['total'])}")
+        self.disco_llave.configure(text=f"Libre en el plan: {_tamano(max(0, tope - usado))}")
 
     def _pintar_tarjeta(self, plan, puesta):
         """Pinta la tarjeta según su llave. Puesta: verde, «✓ PUESTA» y sin casilla. Sin llave: la casilla y sin color.

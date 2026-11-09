@@ -664,6 +664,12 @@ class Comandos:
         ruta, aviso = self._resolver_cancion_borrar(consulta)
         if aviso:
             return aviso
+        return self.enviar_a_papelera(ruta)
+    def enviar_a_papelera(self, ruta):
+        """La canción sale de audios/ y el supervisor la lleva a la papelera (recuperable).
+        Lo usan la orden «borra …» y la Biblioteca musical: el mismo camino en los dos."""
+        if self.reproductor is None:
+            return "Reproductor fuera de línea."
         nombre = self._sin_extension(Path(ruta).name)
         self._liberar_para_borrar(ruta)
         entrada = None

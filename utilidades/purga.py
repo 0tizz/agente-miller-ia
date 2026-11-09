@@ -1,11 +1,13 @@
-"""MILLER · Purga: borra recuerdos, aprendizaje, cachés y el nombre para que MILLER empiece de cero.
+"""MILLER · Purga (reestablecimiento de fábrica): borra recuerdos, aprendizaje, cachés, el nombre, el historial de
+órdenes de la terminal y las llaves puestas para que MILLER empiece de cero.
 
 Se pide desde la ventana MILLER (botón PURGAR, con doble pulsación). No se hace en ese momento: se ejecuta al cerrar
 MILLER, cuando ya están parados el reproductor, la escucha y los hilos de fondo. Al volver a abrirlo, MILLER empieza
 sin recuerdos, sin aprendizaje, sin cachés y sin nombre.
 
 No toca: el código, las canciones (audios/, con la papelera), los modelos, las alarmas, el ecualizador, el registro
-del supervisor ni datos/seguridad (llaves, sellos y alertas).
+del supervisor. Olvida qué llaves estaban puestas (datos/seguridad/llaves_puestas): al reabrir MILLER las pide una vez.
+No toca las llaves, clave.bin, sellos ni alertas.
 """
 import os
 import shutil
@@ -15,8 +17,8 @@ from pathlib import Path
 import configuracion
 
 # Conocimiento de MILLER. Cada archivo se borra con sus copias: .bak (respaldo) y .firma (firma HMAC).
-ARCHIVOS_DATOS = ("memoria.json", "memoriamusical.json", "nombre_aprendido.json", "nombre_asistente.json", "emociones.json",
-                  "equilibrio.json", "iniciativa.json", "movimiento.json", "aplicaciones.json")
+ARCHIVOS_DATOS = ("terminal_historial.json", "memoria.json", "memoriamusical.json", "nombre_aprendido.json", "nombre_asistente.json", "emociones.json",
+                  "equilibrio.json", "iniciativa.json", "movimiento.json", "aplicaciones.json", "orbe.json")
 # Estado del supervisor de la biblioteca. Su registro supervisor.log se conserva.
 ARCHIVOS_SUPERVISOR = ("estado_supervisor.json", "informe_biblioteca.json")
 # Carpetas que nunca se recorren buscando cachés de Python.
@@ -46,6 +48,24 @@ def _borrar(ruta, base, borrados, errores):
         errores.append(f"{ruta.name}: {error}")
 
 
+def _quitar_llaves_puestas(base, borrados, errores):
+    """Olvida qué llaves estaban puestas: al reabrir MILLER se pesan una vez y luego quedan puestas otra vez.
+    Solo si la carpeta de seguridad está dentro de esta instalación (así una prueba con carpeta temporal no toca
+    las llaves reales). No borra las llaves en sí, ni clave.bin, sellos ni alertas."""
+    try:
+        from utilidades import acceso, seguridad
+        if not Path(seguridad.DIR_SEGURIDAD).resolve().is_relative_to(Path(base).resolve()):
+            return
+        for ruta in sorted(acceso.RUTA_PUESTAS.parent.glob(acceso.RUTA_PUESTAS.name + "*")):
+            try:
+                ruta.unlink()
+                borrados.append(ruta.name)
+            except OSError as error:
+                errores.append(f"{ruta.name}: {error}")
+    except Exception as error:
+        errores.append(f"llaves puestas: {error}")
+
+
 def purgar(raiz=None):
     """Borra recuerdos, aprendizaje y cachés. Devuelve (borrados, errores), listas de texto.
     raiz: carpeta de MILLER. Por defecto, la real; las pruebas pasan una carpeta temporal."""
@@ -62,6 +82,7 @@ def purgar(raiz=None):
     if cache.is_dir():
         for ruta in sorted(cache.iterdir()):          # la carpeta cache se queda, vacía
             _borrar(ruta, base, borrados, errores)
+    _quitar_llaves_puestas(base, borrados, errores)
     for carpeta, subcarpetas, _ in os.walk(base):
         for nombre in list(subcarpetas):
             if nombre in NO_RECORRER:

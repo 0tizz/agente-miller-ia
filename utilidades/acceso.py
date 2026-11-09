@@ -5,7 +5,8 @@
 - Las llaves se ponen en la ventana MILLER (una tarjeta por llave) o en la terminal: "acceso <llave>".
 - Mientras una llave está puesta, MILLER funciona con su potencia. Con las dos, manda el modo PRO.
   Al retirarla vuelve el modo que quede. Sin llaves puestas, modo FREE.
-- Al arrancar no hay llaves puestas: MILLER empieza en FREE.
+- Las llaves puestas se recuerdan: al reabrir MILLER siguen puestas hasta que se retiren. Nunca se guarda la
+  llave en claro: solo qué casillas están puestas, en datos/seguridad/llaves_puestas.json, firmado.
 - Tras varios intentos fallidos se bloquea un rato. El contador se guarda firmado: reiniciar no lo borra.
 """
 import hashlib
@@ -55,8 +56,31 @@ REQUIERE = {**{i: "boy" for i in NIVEL_BOY}, **{i: "pro" for i in NIVEL_PRO}}
 SIEMPRE = {"LLAVE_VOZ", "ESTADO_ACCESO", "BLOQUEAR_ACCESO"}      # disponibles en cualquier modo
 _RE_ORDEN_LLAVE = re.compile(r"^\s*(acceso|llave|clave)\s+(\S.*)$", re.IGNORECASE)
 
-_puestas = set()                                   # llaves puestas ahora: "boy" y/o "pro"
-_aviso = {"texto": "Sin llaves puestas: modo FREE, señor."}
+RUTA_PUESTAS = seguridad.DIR_SEGURIDAD / "llaves_puestas.json"
+
+
+def _cargar_puestas():
+    """Las casillas que estaban puestas al cerrar MILLER ("boy" y/o "pro"). El fichero va firmado: si alguien lo
+    altera, seguridad lo aísla y se empieza sin llaves."""
+    datos = seguridad.leer_json(RUTA_PUESTAS, None)
+    lista = datos.get("puestas") if isinstance(datos, dict) else None
+    if not isinstance(lista, list):
+        return set()
+    return {p for p in lista if p in PREFIJO}
+
+
+def _guardar_puestas():
+    with _estado_lock:
+        contenido = {"puestas": sorted(_puestas)}
+    try:
+        seguridad.escribir_json(RUTA_PUESTAS, contenido, indent=2, sincronizar=True)
+    except Exception as error:
+        print(f"[ACCESO] No pude guardar las llaves puestas: {error}")
+
+
+_puestas = _cargar_puestas()                       # "boy" y/o "pro": las que siguen puestas al reabrir MILLER
+_aviso = {"texto": ("Llaves recordadas de la sesión anterior, señor."
+                    if _puestas else "Sin llaves puestas: modo FREE, señor.")}
 _estado_lock = threading.RLock()                   # protege _puestas y _aviso (rápido, sin cálculos)
 _archivo_lock = threading.Lock()                   # protege el fichero de llaves y los intentos (hace hashes)
 _oyentes_modo = []                                 # funciones que se avisan cuando cambia el modo
@@ -173,6 +197,7 @@ def poner(plan, texto):
         return _fijar(f"Negativo. Esa llave es del modo {NOMBRES[encontrada]}: no va en esta casilla, señor.")
     with _estado_lock:
         _puestas.add(encontrada)
+    _guardar_puestas()
     _avisar_modo()
     return _fijar(f"Afirmativo. Llave {PREFIJO[encontrada]} puesta: modo {NOMBRES[modo()]} activo, señor.")
 
@@ -193,6 +218,7 @@ def quitar(plan=None):
             texto = f"Llave {PREFIJO[plan]} retirada. Modo {NOMBRES[modo()]}, señor."
         else:
             texto = f"No hay llave {PREFIJO.get(plan, plan)} puesta, señor."
+    _guardar_puestas()
     _avisar_modo()
     return _fijar(texto)
 

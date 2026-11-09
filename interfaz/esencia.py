@@ -181,9 +181,10 @@ class VentanaEsencia:
                  alto_panel=210, al_escribir=None, ruta_programa=None, version=None):
         self.cerebro = cerebro
         self.ancho = max(200, int(ancho))
-        self.alto = int(self.ancho * 0.96)                        # zona de la esencia: espacio para los círculos
+        self.alto = int(alto_panel) if alto_panel else int(min(self.ancho, 330) * 0.96)   # alto de la zona fija
         self.alto_panel = max(0, int(alto_panel))                 # zona de interacción debajo
         self.panel = None
+        self.aprendiz = None
         self._pendientes_registro = deque(maxlen=50)
         self.siempre_encima = siempre_encima
         self.al_cerrar = al_cerrar
@@ -408,28 +409,30 @@ class VentanaEsencia:
         except Exception:
             pass
         r.protocol("WM_DELETE_WINDOW", self._cerrar_por_usuario)      # cerrar la ventana apaga MILLER
-        cabecera = tk.Frame(r, bg="black", width=self.ancho)
-        cabecera.pack(fill="x")
-        tk.Label(cabecera, text="MILLER", font=("Consolas", 8, "bold"),
-                 bg="black", fg="#2ee86a").pack(side="left", padx=4)
-        self.etiqueta_tamano = tk.Label(cabecera, text="TAMAÑO " + self._tamano, font=("Consolas", 8, "bold"),
-                                        bg="black", fg="#5f8f6a")
-        self.etiqueta_tamano.pack(side="right", padx=4)
         self._tamano_mostrado = self._tamano
         if self.ruta_programa:
             threading.Thread(target=self._medir_tamano, daemon=True, name="MILLER-Tamano").start()
-        self.lienzo = tk.Canvas(r, width=self.ancho, height=self.alto, bg="black", highlightthickness=0)
-        self.lienzo.pack()
+        # Orden de arriba abajo: cabecera, barra de páginas y, debajo, una zona de tamaño fijo. La esencia ocupa
+        # la zona; las páginas se superponen encima y la esencia queda de fondo (la ventana no cambia de tamaño).
+        zona = tk.Frame(r, bg="black", width=self.ancho, height=self.alto)
+        zona.pack_propagate(False)
         if self.alto_panel:
             try:
                 from interfaz.panel import PanelInteraccion
                 self.panel = PanelInteraccion(tk, r, self.ancho, self.alto_panel, al_enviar=self.al_escribir,
                                               al_redimensionar=self._ajustar_alto, al_cerrar=self._cerrar_por_usuario,
-                                              al_purgar=self._purgar)
+                                              al_purgar=self._purgar, zona=zona, en_uso=self._archivos_en_uso,
+                                              comandos=getattr(self.cerebro, "comandos", None))
                 for quien, texto in list(self._pendientes_registro):
                     self.panel.registrar(quien, texto)
             except Exception as error:
                 print(f"[INTERFAZ] Panel de interacción no disponible: {error}")
+        zona.pack()
+        self.lienzo = tk.Canvas(zona, width=self.ancho, height=self.alto, bg="black", highlightthickness=0)
+        self.lienzo.place(x=0, y=0)
+        if self.panel is not None:
+            self.panel.marco.lift()
+        self._crear_aprendiz()
         self._ajustar_alto()
         self._crear_columnas()
         cx, cy = self.ancho / 2, self.alto / 2
@@ -438,8 +441,8 @@ class VentanaEsencia:
         self.anillos = [self.lienzo.create_oval(cx, cy, cx, cy, outline="#0a3a14", width=w) for w in (6, 3, 1)]
         self.nucleo = self.lienzo.create_oval(cx, cy, cx, cy, fill="#021006", outline="#2ee86a", width=2)
         self.texto_modo = self.lienzo.create_text(cx, self.alto - 12, text="", fill="#2ee86a",
-                                                  font=("Consolas", 8, "bold"))
-        self.texto_animo = self.lienzo.create_text(cx, 10, text="", fill="#2ee86a", font=("Consolas", 8))
+                                                  font=("Consolas", 9, "bold"))
+        self.texto_animo = self.lienzo.create_text(cx, 10, text="", fill="#2ee86a", font=("Consolas", 9))
         self.pos, self.vel, self.objetivo = [cx, cy], [0.0, 0.0], [cx, cy]
         self.historial = deque([(cx, cy)] * 6, maxlen=6)
         self._t0 = time.monotonic()
@@ -454,11 +457,67 @@ class VentanaEsencia:
             pass
         self.activa = False
         self.cuerpo.guardar()
+        if self.aprendiz is not None:                   # los eventos del entorno no se pierden al cerrar
+            try:
+                self.aprendiz.guardar(forzar=True)
+            except Exception:
+                pass
         if self.equilibrio is not None and self._equilibrio_propio:
             self.equilibrio.detener()
 
+    def _crear_aprendiz(self):
+        """Lo que MILLER aprende de su entorno (tiempo activo, música, hora, páginas). No tiene ventana propia."""
+        try:
+            from utilidades.orbe_entorno import EntornoOrbe
+            self.aprendiz = EntornoOrbe()
+            self._ultimo_aprendizaje = time.monotonic()
+            if self.panel is not None:
+                self.panel.aprendiz = self.aprendiz
+        except Exception as error:
+            print(f"[INTERFAZ] Aprendizaje del entorno no disponible: {error}")
+
+    def _aprender_entorno(self, ahora):
+        """Cada segundo: cuánto tiempo la ventana está activa, si suena música y la hora. Se guarda firmado."""
+        if self.aprendiz is None or ahora - getattr(self, "_ultimo_aprendizaje", 0.0) < 1.0:
+            return
+        segundos = min(ahora - self._ultimo_aprendizaje, 2.0)
+        self._ultimo_aprendizaje = ahora
+        from datetime import datetime
+        activo = self._segundos_sin_actividad() <= 60.0
+        self.aprendiz.registrar_tiempo(segundos, activo, self._musica_suena(), datetime.now().hour)
+        self.aprendiz.guardar()
+
+    def _musica_suena(self):
+        try:
+            rep = self.cerebro.comandos.reproductor
+            return bool(getattr(rep, "reproduciendo", False) and not getattr(rep, "pausado", False))
+        except Exception:
+            return False
+
+    def _segundos_sin_actividad(self):
+        return self.panel.segundos_sin_actividad() if self.panel is not None else 0.0
+
+    def _archivos_en_uso(self):
+        """Rutas que MILLER está usando ahora (canción sonando, cola e historial): el explorador no las toca."""
+        from pathlib import Path
+        try:
+            rep = self.cerebro.comandos.reproductor
+            rutas = [getattr(rep, "cancion_actual", None), *list(getattr(rep, "cola", None) or []),
+                     *list(getattr(rep, "historial", None) or [])]
+        except Exception:
+            return set()
+        usadas = set()
+        for ruta in rutas:
+            if ruta:
+                try:
+                    usadas.add(str(Path(ruta).resolve()))
+                except OSError:
+                    pass
+        return usadas
+
     def _ajustar_alto(self):
-        """La ventana mide justo lo que se ve: esencia + botones, y la página solo si está abierta."""
+        """Ajusta la ventana a su tamaño pedido. La página abierta se superpone a la zona fija, así que la
+        altura no cambia al abrir o cerrar una página."""
         try:
             self.raiz.update_idletasks()
             self.raiz.geometry(f"{self.ancho}x{self.raiz.winfo_reqheight()}")
@@ -498,8 +557,8 @@ class VentanaEsencia:
     def _crear_columnas(self):
         self.columnas = []
         for x in range(8, self.ancho, 15):
-            item = self.lienzo.create_text(x, 0, text="", fill="#1fbf4a", font=("Consolas", 9), anchor="s")
-            cabeza = self.lienzo.create_text(x, 0, text="", fill="#d8ffd8", font=("Consolas", 9, "bold"), anchor="s")
+            item = self.lienzo.create_text(x, 0, text="", fill="#1fbf4a", font=("Consolas", 10), anchor="s")
+            cabeza = self.lienzo.create_text(x, 0, text="", fill="#d8ffd8", font=("Consolas", 10, "bold"), anchor="s")
             col = {"item": item, "cabeza": cabeza, "y": random.uniform(-self.alto, self.alto),
                    "vel": random.uniform(1.2, 3.8), "x": x, "n": 1}
             self.columnas.append(col)
@@ -632,7 +691,7 @@ class VentanaEsencia:
                 "x": x, "y": y, "color": color, "etiqueta": ETIQUETAS[n],
                 "relleno": self.lienzo.create_oval(x, y, x, y, outline="", fill=self._oscurecer(color, 0.35)),
                 "borde": self.lienzo.create_oval(x - r, y - r, x + r, y + r, outline=color, width=1, dash=(3, 2)),
-                "texto": self.lienzo.create_text(x, y + r + 8, text="", fill=color, font=("Consolas", 7, "bold")),
+                "texto": self.lienzo.create_text(x, y + r + 8, text="", fill=color, font=("Consolas", 8, "bold")),
             }
 
     @staticmethod
@@ -760,10 +819,11 @@ class VentanaEsencia:
                 self._ultimo_guardado = ahora
                 threading.Thread(target=self._guardar_aprendizaje, daemon=True).start()
             self._observar_bajo_orbe()                           # la clave BOY se mira solo bajo el orbe
+            self._aprender_entorno(ahora)                        # lo que el orbe aprende del entorno
             self._dibujar()
-            if self._tamano != self._tamano_mostrado:            # el hilo midió: se pinta aquí (hilo de Tk)
+            if self._tamano != self._tamano_mostrado and self.panel is not None:   # el hilo midió: se pinta en MILLER
                 self._tamano_mostrado = self._tamano
-                self.etiqueta_tamano.configure(text="TAMAÑO " + self._tamano)
+                self.panel.mostrar_tamano(self._tamano)
         except Exception as error:
             print(f"[INTERFAZ] {error}")
         # Si el equipo va cargado, espera algo más en vez de amontonar fotogramas (nunca se congela).
