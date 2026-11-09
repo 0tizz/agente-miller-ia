@@ -1,6 +1,7 @@
 """MILLER · Control de acceso por llaves y modos (free, boy, pro).
 
-- Hay dos llaves: BOY (plan niños) y PRO (plan pro). MILLER guarda solo su huella (PBKDF2-HMAC-SHA256 con sal).
+- Hay dos llaves: BOY (plan niños) y PRO (plan pro). En el código solo va la huella (PBKDF2-HMAC-SHA256 con sal),
+  nunca la llave en claro. La PRO es una sola: la de SAL_PRO / HUELLA_PRO.
 - Las llaves se ponen en la ventana MILLER (una tarjeta por llave) o en la terminal: "acceso <llave>".
 - Mientras una llave está puesta, MILLER funciona con su potencia. Con las dos, manda el modo PRO.
   Al retirarla vuelve el modo que quede. Sin llaves puestas, modo FREE.
@@ -10,7 +11,6 @@
 import hashlib
 import hmac
 import re
-import secrets
 import threading
 import time
 
@@ -24,6 +24,10 @@ PREFIJO = {"boy": "BOY", "pro": "PRO"}
 ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"      # sin 0, O, 1 ni I: fáciles de leer y de escribir
 ITERACIONES = 200_000
 RUTA = configuracion.RUTA_DATOS / "seguridad" / "acceso.json"
+# Llave PRO: solo su huella (sal + PBKDF2 con ITERACIONES). La llave en claro no está en el código ni en el
+# fichero de cada equipo: es la única PRO válida, la misma en todos los equipos.
+SAL_PRO = bytes.fromhex("f8d4310e17d0f1e9c4eb7767f9d79897")
+HUELLA_PRO = "a9539c3c73313cf0376cddff944f8acaeb155145692a2577645cfc6c2872c7a2"
 
 # Nivel mínimo para cada intención. Lo que no aparece aquí es FREE (estándar, completo).
 # NIÑOS (boy): funciones secundarias de biblioteca, internet, sistema y aprendizaje.
@@ -120,26 +124,6 @@ def _guardar(datos):
     seguridad.escribir_json(RUTA, datos, indent=2, sincronizar=True)
 
 
-def generar_llaves(forzar=False):
-    """Crea la llave PRO y guarda solo su huella. La llave BOY no se genera: es la del código abierto y se obtiene
-    (ver llave_boy). Devuelve la llave PRO en claro: se muestra una sola vez."""
-    with _archivo_lock:
-        datos = _cargar()
-        if datos["llaves"] and not forzar:
-            raise RuntimeError("Ya existen llaves. Use forzar=True para sustituirlas.")
-        nuevas, claros = {}, {}
-        for plan in ("pro",):
-            cuerpo = "".join(secrets.choice(ALFABETO) for _ in range(12))
-            llave = f"{PREFIJO[plan]}-{cuerpo[:4]}-{cuerpo[4:8]}-{cuerpo[8:]}"
-            sal = secrets.token_bytes(16)
-            nuevas[plan] = {"sal": sal.hex(), "huella": _huella(canonica(llave), sal)}
-            claros[plan] = llave
-        datos["llaves"] = nuevas
-        datos["fallos"], datos["bloqueado_hasta"] = 0, 0
-        _guardar(datos)
-        return claros
-
-
 def _verificar(texto):
     """(plan, aviso): plan es "boy" o "pro" si la llave vale; None si no vale o hay bloqueo."""
     with _archivo_lock:
@@ -149,8 +133,7 @@ def _verificar(texto):
             minutos = int((datos["bloqueado_hasta"] - ahora) // 60) + 1
             return None, f"Acceso bloqueado tras varios intentos fallidos. Espere {minutos} minuto(s), señor."
         intento = canonica(texto)
-        entrada = datos["llaves"].get("pro")
-        if entrada and hmac.compare_digest(_huella(intento, bytes.fromhex(entrada["sal"])), entrada["huella"]):
+        if hmac.compare_digest(_huella(intento, SAL_PRO), HUELLA_PRO):
             plan = "pro"
         elif llave_boy.verificar(texto):
             plan = "boy"

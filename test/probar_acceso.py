@@ -27,6 +27,7 @@ from utilidades import acceso, cuota
 MB = 1024 * 1024
 GB = 1024 * MB
 import ayuda_llave_boy as ayuda_boy  # noqa: E402
+import ayuda_llave_pro as ayuda_pro  # noqa: E402
 from utilidades import llave_boy  # noqa: E402
 llave_boy.RUTA = TEMPORAL / "llave_boy.json"
 acceso.RUTA = TEMPORAL / "acceso.json"
@@ -43,21 +44,17 @@ def reiniciar_intentos():
     acceso._guardar(datos)
 
 
-print("1. Llaves: generación y guardado")
-claros = acceso.generar_llaves()
-comprobar(set(claros) == {"pro"} and claros["pro"].startswith("PRO-"), "se genera solo la llave PRO")
+print("1. Llaves: PRO de prueba y guardado")
+claros = {"pro": ayuda_pro.preparar()}        # llave PRO de prueba (la real no va en el repositorio)
 claros["boy"] = ayuda_boy.preparar()          # llave BOY de prueba (huella y fragmentos)
+comprobar(acceso.poner("pro", "PRO-AAAA-BBBB-CCCC").startswith("Negativo"),
+          "una PRO que no es la de la huella se rechaza")
 comprobar(claros["boy"].startswith("BOY-") and len(claros["boy"].replace("-", "")) == 15,
           "la llave BOY de prueba tiene el formato BOY-XXXX-XXXX-XXXX")
-comprobar(len(claros["pro"].replace("-", "")) == 15, "la llave PRO tiene 12 caracteres tras el prefijo")
+comprobar(len(claros["pro"].replace("-", "")) == 15, "la llave PRO de prueba tiene 12 caracteres tras el prefijo")
 texto_fichero = acceso.RUTA.read_text(encoding="utf-8")
 comprobar(claros["boy"].replace("-", "") not in texto_fichero and claros["pro"].replace("-", "") not in texto_fichero,
           "el fichero de acceso no contiene las llaves en claro")
-try:
-    acceso.generar_llaves()
-    comprobar(False, "no se pueden sustituir las llaves sin forzar")
-except RuntimeError:
-    comprobar(True, "no se pueden sustituir las llaves sin forzar")
 
 print("2. Arranque en FREE y control por modo")
 comprobar(acceso.modo() == "free", "arranca en FREE sin llaves puestas")

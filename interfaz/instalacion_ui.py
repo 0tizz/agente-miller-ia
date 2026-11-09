@@ -19,6 +19,7 @@ import threading
 from utilidades import instalador, plan_instalacion as plan
 
 LARGO_RUTA = 54      # caracteres de ruta que se muestran en la lista; si es más larga, se corta por delante
+ESTILO_BARRA = "MillerVerde.Vertical.TScrollbar"
 
 
 class PaginaInstalacion:
@@ -48,7 +49,7 @@ class PaginaInstalacion:
 
         # Zona con desplazamiento
         self.lienzo = self.tk.Canvas(zona, bg=f, highlightthickness=0, bd=0)
-        self.barra_scroll = self.tk.Scrollbar(zona, orient="vertical", command=self.lienzo.yview)
+        self.barra_scroll = self._barra_verde(zona, self.lienzo.yview)
         self.lienzo.configure(yscrollcommand=self.barra_scroll.set)
         self.barra_scroll.pack(side="right", fill="y")
         self.lienzo.pack(side="left", fill="both", expand=True)
@@ -91,6 +92,23 @@ class PaginaInstalacion:
                                          command=self.instalar)
         self.b_instalar.grid(row=0, column=3, padx=(3, 0), sticky="ew")
         botones.columnconfigure(3, weight=1)
+
+    def _barra_verde(self, padre, comando):
+        """Barra de desplazamiento en verde sobre negro: solo carril y deslizador, sin flechas ni fondo blanco.
+        Windows pinta la barra nativa en blanco y no admite colores; por eso se usa ttk con el tema «clam»."""
+        try:
+            from tkinter import ttk
+            estilo = ttk.Style(padre)
+            estilo.theme_use("clam")
+            estilo.layout(ESTILO_BARRA, [("Vertical.Scrollbar.trough", {"sticky": "ns", "children": [
+                ("Vertical.Scrollbar.thumb", {"expand": "1", "sticky": "nswe"})]})])
+            estilo.configure(ESTILO_BARRA, background=self.t["VERDE"], troughcolor=self.t["FONDO"],
+                             bordercolor=self.t["FONDO"], lightcolor=self.t["VERDE"], darkcolor=self.t["VERDE"],
+                             borderwidth=0, relief="flat", gripcount=0)
+            estilo.map(ESTILO_BARRA, background=[("pressed", self.t["VERDE"]), ("active", self.t["VERDE"])])
+            return ttk.Scrollbar(padre, orient="vertical", command=comando, style=ESTILO_BARRA)
+        except Exception:
+            return self.tk.Scrollbar(padre, orient="vertical", command=comando)
 
     def desplazar(self, paso):
         """Lo llama el panel con la rueda del ratón cuando esta página está abierta."""

@@ -18,6 +18,7 @@ configuracion.RUTA_DATOS = TEMPORAL / "datos"
 configuracion.RUTA_BASE = TEMPORAL / "miller"
 from utilidades import acceso, llave_boy  # noqa: E402
 import ayuda_llave_boy  # noqa: E402
+import ayuda_llave_pro  # noqa: E402
 
 acceso.RUTA = TEMPORAL / "acceso.json"
 llave_boy.RUTA = TEMPORAL / "llave_boy.json"
@@ -61,8 +62,8 @@ comprobar("la llave puesta en la tarjeta no da aviso de descubrimiento",
 llave_boy._guardar({})
 print("2. Acceso con la llave BOY")
 acceso.quitar(None)
-claros = acceso.generar_llaves(forzar=True)
-comprobar("la llave PRO se genera; la BOY no", set(claros) == {"pro"})
+claros = {"pro": ayuda_llave_pro.preparar()}
+comprobar("la llave PRO de prueba se prepara; la BOY no", set(claros) == {"pro"})
 comprobar("la llave BOY pone el modo NIÑOS", acceso.poner("boy", llave).startswith("Afirmativo") and acceso.modo() == "boy")
 acceso.quitar(None)
 comprobar("una llave PRO no va en la casilla BOY", "no va en esta casilla" in acceso.poner("boy", claros["pro"]))

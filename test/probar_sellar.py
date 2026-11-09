@@ -22,10 +22,11 @@ def comprobar(condicion, mensaje):
 
 
 from utilidades import acceso, seguridad  # noqa: E402
+import ayuda_llave_pro  # noqa: E402
 from cerebro.cerebro import Cerebro  # noqa: E402
 
 acceso.RUTA = TEMPORAL / "acceso.json"
-llaves = acceso.generar_llaves()
+llaves = {"pro": ayuda_llave_pro.preparar()}
 c = Cerebro.__new__(Cerebro)
 c.iniciativa = None
 c.activador = None

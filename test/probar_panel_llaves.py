@@ -34,7 +34,8 @@ for carpeta in ("audios", "cerebro"):
 (base / "audios" / "cancion.mp3").write_bytes(b"x" * 3000)
 configuracion.RUTA_BASE = base
 import ayuda_llave_boy  # noqa: E402
-llaves = acceso.generar_llaves()
+import ayuda_llave_pro  # noqa: E402
+llaves = {"pro": ayuda_llave_pro.preparar()}
 llaves["boy"] = ayuda_llave_boy.preparar()   # llave BOY de prueba
 from utilidades import nombre as nombre_asistente  # noqa: E402
 configuracion.RUTA_NOMBRE_ASISTENTE = TEMPORAL / "nombre_ya_puesto.json"
