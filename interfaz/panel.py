@@ -83,6 +83,7 @@ class PanelInteraccion:
         self._borrador = ""                                    # lo escrito antes de empezar a subir por el historial
         self.pos_historial = len(self.historial)
         self.faltan = 0
+        self._instalando, self._pulso = False, 0       # instalación o importación en curso; posición de la barra
         self._tarjetas = {}
         self._comprobando = set()                      # llaves que se están comprobando (en otro hilo)
         self._hay_llaves = False
@@ -179,7 +180,15 @@ class PanelInteraccion:
                                              command=self._instalar)
         self.boton_instalar.pack(side="left")
         self.tk.Button(acciones, text="REVISAR", font=FUENTE, bg=FONDO, fg=GRIS, relief="flat",
-                       command=self.actualizar_estado).pack(side="left", padx=6)
+                       command=self._revisar).pack(side="left", padx=6)
+        self.boton_importar = self.tk.Button(acciones, text="USAR MODELOS DE OTRA CARPETA…", font=FUENTE, bg=FONDO,
+                                             fg=AMBAR, relief="flat", command=self._importar_modelos)
+        self.boton_importar.pack(side="left", padx=6)
+        # Progreso de la instalación: el paso actual y una barra (indeterminada mientras pip o el zip trabajan).
+        self.texto_paso = self.tk.Label(marco, text="", anchor="w", font=FUENTE, bg=FONDO, fg=GRIS)
+        self.texto_paso.pack(fill="x", padx=4)
+        self.barra_instalacion = self.tk.Canvas(marco, height=10, bg=FONDO, highlightthickness=0)
+        self.barra_instalacion.pack(fill="x", padx=4, pady=(0, 4))
         self.bitacora = self._texto(marco, 5)
         self.bitacora.pack(fill="both", expand=True, padx=4, pady=2)
         return marco
@@ -616,6 +625,11 @@ class PanelInteraccion:
         self.raiz.after(REFRESCO_LLAVES_MS, self._refrescar_llaves)
 
     # ------------------------------------------------------------ instalación
+    def _revisar(self):
+        """REVISAR: vuelve a mirar qué falta y lo dice en la bitácora (también si hay un error)."""
+        self._anadir(self.bitacora, "Revisando componentes…")
+        self.actualizar_estado()
+
     def actualizar_estado(self):
         """Pinta cada componente con ✓ o ✗ (se calcula en otro hilo: no traba la ventana)."""
         def calcular():
@@ -635,19 +649,89 @@ class PanelInteraccion:
             self.tk.Label(self.lista, text=("✓ " if listo else "✗ ") + nombre, anchor="w", font=FUENTE, bg=FONDO,
                           fg=VERDE if listo else ROJO).pack(fill="x")
         self.faltan = faltan
-        self.boton_instalar.configure(state="normal" if faltan else "disabled",
-                                      text="INSTALAR LO QUE FALTA" if faltan else "TODO INSTALADO")
+        if not self._instalando:                       # durante una instalación el botón se queda bloqueado
+            self.boton_instalar.configure(state="normal" if faltan else "disabled",
+                                          text="INSTALAR LO QUE FALTA" if faltan else "TODO INSTALADO")
+        self._anadir(self.bitacora, "Todo instalado." if not faltan else f"Faltan {faltan} componente(s).")
         self._pintar_botones()
 
     def _instalar(self):
-        self.boton_instalar.configure(state="disabled", text="INSTALANDO…")
+        if self._instalando:
+            return
+        self._empezar_trabajo("INSTALANDO…")
+
         def trabajo():
-            from utilidades import instalador
-            instalador.instalar_todo(lambda texto: self.cola.put(("bitacora", texto)))
-            # El modelo de voz se carga al arrancar: tras instalarlo, la voz se activa al reiniciar MILLER.
-            self.cola.put(("bitacora", "Instalación terminada. Reinicie MILLER para activar la voz."))
-            self.cola.put(("refrescar", None))
+            try:
+                from utilidades import instalador
+                ok = instalador.instalar_todo(lambda texto: self.cola.put(("bitacora", texto)),
+                                              lambda fraccion, texto: self.cola.put(("progreso", (fraccion, texto))))
+                # El modelo de voz se carga al arrancar: tras instalarlo, la voz se activa al reiniciar MILLER.
+                self.cola.put(("bitacora", "Instalación terminada. Reinicie MILLER para activar la voz." if ok
+                               else "Terminó con avisos: revise la lista de arriba."))
+            except Exception as error:
+                self.cola.put(("bitacora", f"Error inesperado instalando: {error}"))
+            finally:
+                self.cola.put(("fin_trabajo", None))           # siempre: el botón vuelve a quedar usable
         threading.Thread(target=trabajo, daemon=True, name="MILLER-Instalador").start()
+
+    def _importar_modelos(self):
+        """Copia modelos ya descargados desde otra carpeta de MILLER (la que tiene modelos/)."""
+        if self._instalando:
+            return
+        from tkinter import filedialog
+        carpeta = filedialog.askdirectory(parent=self.raiz, title="Elija la carpeta de MILLER que tiene modelos/")
+        if not carpeta:
+            return
+        self._empezar_trabajo("COPIANDO…")
+
+        def trabajo():
+            try:
+                from utilidades import instalador
+                ok = instalador.importar_desde(carpeta, lambda texto: self.cola.put(("bitacora", texto)))
+                self.cola.put(("bitacora", "Modelos copiados. Reinicie MILLER para activar la voz." if ok
+                               else "Algunos modelos no estaban en esa carpeta."))
+            except Exception as error:
+                self.cola.put(("bitacora", f"Error copiando modelos: {error}"))
+            finally:
+                self.cola.put(("fin_trabajo", None))
+        threading.Thread(target=trabajo, daemon=True, name="MILLER-Importar").start()
+
+    def _empezar_trabajo(self, texto_boton):
+        """Bloquea los botones y empieza a mover la barra mientras dura la instalación o la copia."""
+        self._instalando, self._pulso = True, 0
+        self.boton_instalar.configure(state="disabled", text=texto_boton)
+        self.boton_importar.configure(state="disabled")
+        self._latir_barra()
+
+    def _terminar_trabajo(self):
+        self._instalando = False
+        self.boton_importar.configure(state="normal")
+        self.texto_paso.configure(text="")
+        self._pintar_barra(0.0)
+        self.actualizar_estado()
+
+    def _latir_barra(self):
+        """Mueve la barra indeterminada cada 90 ms mientras dura el trabajo."""
+        if not self._instalando:
+            return
+        self._pulso = (self._pulso + 2) % 100
+        self._pintar_barra(None)
+        self.raiz.after(90, self._latir_barra)
+
+    def _pintar_barra(self, fraccion):
+        """fraccion 0..1 = barra fija; None = segmento que se desplaza (trabajo sin porcentaje)."""
+        lienzo = self.barra_instalacion
+        ancho = max(lienzo.winfo_width(), 300)          # antes de dibujarse la ventana mide 1 px
+        alto = 10
+        lienzo.delete("all")
+        lienzo.create_rectangle(0, 0, ancho, alto, fill=VERDE_OSCURO, outline="")
+        if fraccion is None:
+            tramo = 80
+            x = int(self._pulso / 100 * (ancho + tramo)) - tramo
+            if x < ancho and x + tramo > 0:
+                lienzo.create_rectangle(max(0, x), 0, min(ancho, x + tramo), alto, fill=VERDE, outline="")
+        elif fraccion > 0:
+            lienzo.create_rectangle(0, 0, int(ancho * min(1.0, fraccion)), alto, fill=VERDE, outline="")
 
     # ------------------------------------------------------------ desde cualquier hilo
     def registrar(self, quien, texto):
@@ -695,6 +779,16 @@ class PanelInteraccion:
                     self._resultado_nombre(*dato)
                 elif tipo == "limpiar":
                     self._vaciar(self.terminal)
+                elif tipo == "progreso":
+                    fraccion, texto = dato
+                    self.texto_paso.configure(text=texto)
+                    self._pintar_barra(fraccion)
+                elif tipo == "fin_trabajo":
+                    self._terminar_trabajo()
             except Exception as error:
                 print(f"[INTERFAZ] Panel: {error}")
+                try:                                    # que el error también se vea en la ventana
+                    self._anadir(self.bitacora, f"Error en la ventana: {error}")
+                except Exception:
+                    pass
         self.raiz.after(150, self._atender_cola)

@@ -1,4 +1,5 @@
-"""MILLER · Instalación inicial: comprueba e instala librerías y descarga los modelos que faltan."""
+"""MILLER · Instalación inicial: comprueba e instala librerías, descarga los modelos que faltan
+o copia los que ya existen en otra carpeta de MILLER (importar_desde)."""
 import os
 import shutil
 import subprocess
@@ -32,6 +33,12 @@ MODELOS = {
                "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
                "dominios": ("github.com",)},
 }
+# Dónde están cada modelo dentro de una copia de MILLER (carpeta modelos/ de esa copia).
+UBICACION_EN_COPIA = {
+    "vosk": ("voz", "vosk-model-small-es-0.42"),
+    "voz": ("voces", "es_ES-davefx-medium"),
+    "ffmpeg": ("ffmpeg-master-gpl",),
+}
 _SIN_VENTANA = 0x08000000 if os.name == "nt" else 0
 _ocupado = threading.Lock()
 
@@ -56,8 +63,12 @@ def puede_instalar_librerias():
     return not getattr(sys, "frozen", False)
 
 
-def instalar_librerias(avisar=print):
-    """pip install de lo que falta. avisar(texto) recibe cada línea de progreso."""
+def _sin_progreso(_fraccion, _texto):
+    pass
+
+
+def instalar_librerias(avisar=print, progreso=_sin_progreso):
+    """pip install de lo que falta. avisar(texto) recibe cada línea; progreso(fraccion, texto) mueve la barra."""
     if not puede_instalar_librerias():
         avisar("Las librerías ya van incluidas en MILLER.exe.")
         return True
@@ -71,6 +82,7 @@ def instalar_librerias(avisar=print):
     try:
         paquetes = [p for p, _, _ in faltan.values()]
         avisar("Instalando: " + ", ".join(paquetes))
+        progreso(None, "Instalando librerías con pip…")
         proceso = subprocess.Popen([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", *paquetes],
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
                                    errors="replace", creationflags=_SIN_VENTANA)
@@ -78,17 +90,18 @@ def instalar_librerias(avisar=print):
             linea = linea.strip()
             if linea and not linea.startswith(("  ", "Requirement already")):
                 avisar(linea[:90])
+                progreso(None, linea[:90])
         ok = proceso.wait() == 0
-        avisar("Instalación completada. Reinicie MILLER para usarlas." if ok else "La instalación falló. Revise el registro.")
+        avisar("Librerías instaladas." if ok else "La instalación de librerías falló. Revise el registro.")
         return ok
     except Exception as error:
-        avisar(f"Error instalando: {error}")
+        avisar(f"Error instalando librerías: {error}")
         return False
     finally:
         _ocupado.release()
 
 
-def _descargar(url, destino, avisar):
+def _descargar(url, destino, avisar, progreso=_sin_progreso):
     peticion = urllib.request.Request(url, headers={"User-Agent": "MILLER/0.1"})
     with urllib.request.urlopen(peticion, timeout=30) as r, open(destino, "wb") as f:
         total = int(r.headers.get("Content-Length") or 0)
@@ -101,9 +114,12 @@ def _descargar(url, destino, avisar):
             leido += len(bloque)
             if total:
                 porcentaje = leido * 100 // total
+                progreso(leido / total, f"Descargando… {leido >> 20} de {total >> 20} MB ({porcentaje} %)")
                 if porcentaje >= ultimo + 10:
                     ultimo = porcentaje
                     avisar(f"  {porcentaje} % ({leido >> 20} de {total >> 20} MB)")
+            else:
+                progreso(None, f"Descargando… {leido >> 20} MB")
 
 
 def _dentro(base, nombre):
@@ -112,7 +128,7 @@ def _dentro(base, nombre):
     return destino
 
 
-def descargar_modelo(clave, avisar=print):
+def descargar_modelo(clave, avisar=print, progreso=_sin_progreso):
     """Descarga y coloca un modelo en modelos/. Solo desde las URLs de MODELOS."""
     m = MODELOS.get(clave)
     if m is None:
@@ -130,8 +146,9 @@ def descargar_modelo(clave, avisar=print):
     try:
         archivo = temporal / Path(m["url"]).name
         avisar(f"Descargando {m['nombre']}…")
-        _descargar(m["url"], archivo, avisar)
+        _descargar(m["url"], archivo, avisar, progreso)
         avisar("Descomprimiendo…")
+        progreso(None, f"Descomprimiendo {m['nombre']}…")
         extraido = temporal / "extraido"
         extraido.mkdir()
         if archivo.suffix == ".zip":
@@ -168,11 +185,54 @@ def descargar_modelo(clave, avisar=print):
         _ocupado.release()
 
 
-def instalar_todo(avisar=print):
-    """Librerías y modelos que falten, en orden."""
-    ok = instalar_librerias(avisar)
+def importar_desde(carpeta, avisar=print):
+    """Copia los modelos que ya existen en otra copia de MILLER (su carpeta modelos/). No descarga nada.
+    Acepta la carpeta de MILLER o directamente su carpeta modelos/. Devuelve True si todo quedó verificado."""
+    origen = Path(carpeta)
+    base = origen / "modelos" if (origen / "modelos").is_dir() else origen
+    if not _ocupado.acquire(blocking=False):
+        avisar("Ya hay una instalación en curso.")
+        return False
+    try:
+        listos = 0
+        for clave, m in MODELOS.items():
+            origen_modelo = base.joinpath(*UBICACION_EN_COPIA[clave])
+            destino = Path(m["destino"])
+            if not origen_modelo.is_dir():
+                avisar(f"{m['nombre']}: no está en esa carpeta.")
+                continue
+            if origen_modelo.resolve() == destino.resolve():
+                avisar(f"{m['nombre']}: ya está en esta copia.")
+                listos += 1 if m["prueba"]() else 0
+                continue
+            avisar(f"Copiando {m['nombre']}…")
+            shutil.copytree(origen_modelo, destino, dirs_exist_ok=True)
+            ok = bool(m["prueba"]())
+            avisar(f"{m['nombre']}: {'copiado.' if ok else 'copiado, pero no se pudo verificar.'}")
+            listos += 1 if ok else 0
+        return listos == len(MODELOS)
+    except Exception as error:
+        avisar(f"Error copiando modelos: {error}")
+        return False
+    finally:
+        _ocupado.release()
+
+
+def instalar_todo(avisar=print, progreso=_sin_progreso):
+    """Librerías y modelos que falten, en orden. Cada paso se protege: un fallo no detiene los demás."""
+    try:
+        ok = instalar_librerias(avisar, progreso)
+    except Exception as error:
+        avisar(f"Librerías: {error}")
+        ok = False
     for clave, m in MODELOS.items():
         if not m["prueba"]():
-            ok = descargar_modelo(clave, avisar) and ok
-    avisar("Todo listo." if todo_listo() else "Quedan componentes pendientes.")
-    return ok
+            try:
+                ok = descargar_modelo(clave, avisar, progreso) and ok
+            except Exception as error:
+                avisar(f"{m['nombre']}: {error}")
+                ok = False
+    listo = todo_listo()
+    avisar("Todo listo." if listo else "Quedan componentes pendientes.")
+    progreso(1.0 if listo else 0.0, "Todo listo." if listo else "Quedan componentes pendientes.")
+    return ok and listo
