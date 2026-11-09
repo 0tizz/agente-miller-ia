@@ -1,14 +1,24 @@
 """MILLER · Página INSTALACIÓN de la ventana.
 
-- Lista de componentes: ✓ verde si está instalado, ✗ rojo si falta (y dónde se encontró en este equipo).
-- Barra de la descarga o paso actual, y barra del progreso total.
-- Botones que solo se activan cuando tienen sentido: INSTALAR LO QUE FALTA solo si falta algo.
+Disposición (de arriba abajo):
+  - Zona con desplazamiento (rueda del ratón o barra lateral): resumen, lista compacta
+    (✓ verde instalado, ✗ rojo falta, con la ruta encontrada en este equipo) y bitácora corta.
+  - Barras de progreso: la de la descarga o paso actual, y la del progreso total.
+  - Botones compactos, siempre al pie.
+
+Reglas de los botones:
+  - COMPROBAR ESTADO: disponible cuando no hay trabajo en curso. Vuelve a mirar qué falta.
+  - INSTALAR LO QUE FALTA (n): solo si falta algo. Sigue el plan predefinido de plan_instalacion.
+  - BUSCAR EN ESTE EQUIPO y ELEGIR CARPETA…: solo si falta algo. Buscar copia a modelos/ lo que encuentra
+    con nombre exacto; si copió bien, estos dos botones se ocultan y solo quedan COMPROBAR e INSTALAR.
 
 El trabajo pesado corre en hilos. Todo cambio de la ventana vuelve al hilo de la interfaz por la cola del panel.
 """
 import threading
 
 from utilidades import instalador, plan_instalacion as plan
+
+LARGO_RUTA = 54      # caracteres de ruta que se muestran en la lista; si es más larga, se corta por delante
 
 
 class PaginaInstalacion:
@@ -20,6 +30,7 @@ class PaginaInstalacion:
         self.filas = None                  # None = todavía no revisado; si no, estado() de instalador
         self.encontrados = {}              # clave -> carpeta encontrada en este equipo
         self.ocupado = False               # hay una instalación, copia o búsqueda en curso
+        self.copia_hecha = False           # una búsqueda copió lo que encontró: ocultar BUSCAR y ELEGIR
         self._pulso, self._pulsando, self._latiendo = 0, False, False
         self._construir(marco)
         self.revisar()
@@ -27,38 +38,72 @@ class PaginaInstalacion:
     # ------------------------------------------------------------ construcción
     def _construir(self, marco):
         f = self.t["FONDO"]
-        acciones = self.tk.Frame(marco, bg=f)
-        acciones.pack(fill="x", padx=4, pady=2)
-        self.b_instalar = self.tk.Button(acciones, text="REVISANDO…", font=self.fuente_negrita, bg=self.t["VERDE_OSCURO"],
-                                         fg=self.t["VERDE"], activebackground=self.t["VERDE"], relief="flat",
+        # Primero se reserva el pie (botones) y luego las barras encima; la zona con desplazamiento ocupa el resto.
+        botones = self.tk.Frame(marco, bg=f)
+        botones.pack(side="bottom", fill="x", padx=4, pady=(0, 3))
+        progreso = self.tk.Frame(marco, bg=f)
+        progreso.pack(side="bottom", fill="x", padx=4, pady=(2, 0))
+        zona = self.tk.Frame(marco, bg=f)
+        zona.pack(side="top", fill="both", expand=True, padx=4, pady=(2, 0))
+
+        # Zona con desplazamiento
+        self.lienzo = self.tk.Canvas(zona, bg=f, highlightthickness=0, bd=0)
+        self.barra_scroll = self.tk.Scrollbar(zona, orient="vertical", command=self.lienzo.yview)
+        self.lienzo.configure(yscrollcommand=self.barra_scroll.set)
+        self.barra_scroll.pack(side="right", fill="y")
+        self.lienzo.pack(side="left", fill="both", expand=True)
+        self.contenido = self.tk.Frame(self.lienzo, bg=f)
+        self._ventana = self.lienzo.create_window((0, 0), window=self.contenido, anchor="nw")
+        self.contenido.bind("<Configure>", self._ajustar_scroll)
+        self.lienzo.bind("<Configure>", self._ajustar_ancho)
+
+        self.resumen = self.tk.Label(self.contenido, text="", anchor="w", font=self.fuente, bg=f, fg=self.t["GRIS"])
+        self.resumen.pack(fill="x")
+        self.lista = self.tk.Frame(self.contenido, bg=f)
+        self.lista.pack(fill="x")
+        self.bitacora = self.panel._texto(self.contenido, 4)
+        self.bitacora.pack(fill="x", pady=(3, 0))
+
+        # Barras de progreso (encima de los botones)
+        self.texto_actual = self.tk.Label(progreso, text="", anchor="w", font=self.fuente, bg=f, fg=self.t["GRIS"])
+        self.texto_actual.pack(fill="x")
+        self.barra_actual = self.tk.Canvas(progreso, height=8, bg=f, highlightthickness=0)
+        self.barra_actual.pack(fill="x", pady=(0, 2))
+        self.texto_total = self.tk.Label(progreso, text="", anchor="w", font=self.fuente, bg=f, fg=self.t["GRIS"])
+        self.texto_total.pack(fill="x")
+        self.barra_total = self.tk.Canvas(progreso, height=8, bg=f, highlightthickness=0)
+        self.barra_total.pack(fill="x")
+
+        # Botones compactos en una fila (grid, para que los que se ocultan no muevan a los demás)
+        self.b_comprobar = self.tk.Button(botones, text="COMPROBAR ESTADO", font=self.fuente, bg=f,
+                                          fg=self.t["GRIS"], relief="flat", padx=4, pady=0, command=self.revisar)
+        self.b_comprobar.grid(row=0, column=0, padx=(0, 3), sticky="w")
+        self.b_buscar = self.tk.Button(botones, text="BUSCAR EN ESTE EQUIPO", font=self.fuente, bg=f,
+                                       fg=self.t["AMBAR"], relief="flat", padx=4, pady=0, command=self.buscar)
+        self.b_buscar.grid(row=0, column=1, padx=3, sticky="w")
+        self.b_elegir = self.tk.Button(botones, text="ELEGIR CARPETA…", font=self.fuente, bg=f,
+                                       fg=self.t["GRIS"], relief="flat", padx=4, pady=0,
+                                       command=self.elegir_carpeta)
+        self.b_elegir.grid(row=0, column=2, padx=3, sticky="w")
+        self.b_instalar = self.tk.Button(botones, text="REVISANDO…", font=self.fuente_negrita,
+                                         bg=self.t["VERDE_OSCURO"], fg=self.t["VERDE"],
+                                         activebackground=self.t["VERDE"], relief="flat", padx=6, pady=0,
                                          command=self.instalar)
-        self.b_instalar.pack(side="left")
-        self.b_buscar = self.tk.Button(acciones, text="BUSCAR EN ESTE EQUIPO", font=self.fuente, bg=f,
-                                       fg=self.t["AMBAR"], relief="flat", command=self.buscar)
-        self.b_buscar.pack(side="left", padx=6)
-        self.b_elegir = self.tk.Button(acciones, text="ELEGIR CARPETA…", font=self.fuente, bg=f,
-                                       fg=self.t["GRIS"], relief="flat", command=self.elegir_carpeta)
-        self.b_elegir.pack(side="left", padx=6)
-        self.b_revisar = self.tk.Button(acciones, text="REVISAR", font=self.fuente, bg=f, fg=self.t["GRIS"],
-                                        relief="flat", command=self.revisar)
-        self.b_revisar.pack(side="left", padx=6)
+        self.b_instalar.grid(row=0, column=3, padx=(3, 0), sticky="ew")
+        botones.columnconfigure(3, weight=1)
 
-        self.resumen = self.tk.Label(marco, text="", anchor="w", font=self.fuente, bg=f, fg=self.t["GRIS"])
-        self.resumen.pack(fill="x", padx=4, pady=(2, 0))
-        self.lista = self.tk.Frame(marco, bg=f)
-        self.lista.pack(fill="x", padx=4)
+    def desplazar(self, paso):
+        """Lo llama el panel con la rueda del ratón cuando esta página está abierta."""
+        if self.contenido.winfo_reqheight() > self.lienzo.winfo_height():
+            self.lienzo.yview_scroll(paso, "units")
 
-        self.texto_actual = self.tk.Label(marco, text="", anchor="w", font=self.fuente, bg=f, fg=self.t["GRIS"])
-        self.texto_actual.pack(fill="x", padx=4, pady=(6, 0))
-        self.barra_actual = self.tk.Canvas(marco, height=10, bg=f, highlightthickness=0)
-        self.barra_actual.pack(fill="x", padx=4)
-        self.texto_total = self.tk.Label(marco, text="", anchor="w", font=self.fuente, bg=f, fg=self.t["GRIS"])
-        self.texto_total.pack(fill="x", padx=4, pady=(4, 0))
-        self.barra_total = self.tk.Canvas(marco, height=10, bg=f, highlightthickness=0)
-        self.barra_total.pack(fill="x", padx=4, pady=(0, 4))
+    def _ajustar_scroll(self, _evento=None):
+        alto = max(self.lienzo.winfo_height(), self.contenido.winfo_reqheight())
+        self.lienzo.configure(scrollregion=(0, 0, self.lienzo.winfo_width(), alto))
 
-        self.bitacora = self.panel._texto(marco, 5)
-        self.bitacora.pack(fill="both", expand=True, padx=4, pady=2)
+    def _ajustar_ancho(self, evento):
+        self.lienzo.itemconfigure(self._ventana, width=evento.width)
+        self._ajustar_scroll()
 
     # ------------------------------------------------------------ hilos -> ventana
     def _ui(self, funcion):
@@ -76,7 +121,7 @@ class PaginaInstalacion:
     # ------------------------------------------------------------ dibujo
     def _pintar_barra(self, lienzo, fraccion):
         """fraccion 0..1 = barra fija; None = segmento que se desplaza (trabajo sin porcentaje)."""
-        ancho, alto = max(lienzo.winfo_width(), 300), 10
+        ancho, alto = max(lienzo.winfo_width(), 300), 8
         lienzo.delete("all")
         lienzo.create_rectangle(0, 0, ancho, alto, fill=self.t["VERDE_OSCURO"], outline="")
         if fraccion is None:
@@ -111,21 +156,25 @@ class PaginaInstalacion:
         self._pintar_barra(self.barra_actual, None)
         self.panel.raiz.after(90, self._latir)
 
+    def _corta(self, ruta):
+        texto = str(ruta)
+        return texto if len(texto) <= LARGO_RUTA else "…" + texto[-(LARGO_RUTA - 1):]
+
     def _pintar_lista(self):
         for hijo in self.lista.winfo_children():
             hijo.destroy()
         for clave, nombre, listo, tipo in (self.filas or []):
-            fila = self.tk.Frame(self.lista, bg=self.t["FONDO"])
-            fila.pack(fill="x")
-            self.tk.Label(fila, text=("✓ " if listo else "✗ ") + nombre, anchor="w", font=self.fuente,
-                          bg=self.t["FONDO"], fg=self.t["VERDE"] if listo else self.t["ROJO"]).pack(side="left")
-            if not listo and tipo == "modelo":
-                if self.encontrados.get(clave):
-                    detalle, color = f"   · encontrado en {self.encontrados[clave]}", self.t["AMBAR"]
-                else:
-                    detalle, color = "   · no está en este equipo: se descargará", self.t["GRIS"]
-                self.tk.Label(fila, text=detalle, anchor="w", font=self.fuente, bg=self.t["FONDO"],
-                              fg=color).pack(side="left")
+            if listo:
+                texto, color = f"✓ {nombre}", self.t["VERDE"]
+            else:
+                texto, color = f"✗ {nombre}", self.t["ROJO"]
+                if tipo == "modelo":
+                    if self.encontrados.get(clave):
+                        texto += f" · en este equipo: {self._corta(self.encontrados[clave])}"
+                    else:
+                        texto += " · se descargará"
+            self.tk.Label(self.lista, text=texto, anchor="w", font=self.fuente, bg=self.t["FONDO"],
+                          fg=color).pack(fill="x")
         self._pintar_resumen()
 
     def _faltan(self):
@@ -133,6 +182,10 @@ class PaginaInstalacion:
         if self.filas is None:
             return None
         return sum(1 for _, _, listo, _ in self.filas if not listo)
+
+    def _pendientes(self):
+        """Modelos que faltan ahora mismo (no mira las librerías de Python)."""
+        return [c for c, m in instalador.MODELOS.items() if not m["prueba"]()]
 
     def _pintar_resumen(self):
         total = len(self.filas or [])
@@ -149,10 +202,18 @@ class PaginaInstalacion:
         faltan = self._faltan()
         self.panel.faltan = faltan or 0                # la pestaña INSTALACIÓN se marca si falta algo
         libre = not self.ocupado
-        self.b_revisar.configure(state="normal" if libre else "disabled")
-        puede_faltar = bool(faltan) and libre
-        self.b_buscar.configure(state="normal" if puede_faltar else "disabled")
-        self.b_elegir.configure(state="normal" if puede_faltar else "disabled")
+        estado_libre = "normal" if libre else "disabled"
+        self.b_comprobar.configure(state=estado_libre)
+
+        # BUSCAR y ELEGIR solo si falta algo y la última búsqueda no dejó ya copiado lo que había
+        mostrar_buscar = bool(faltan) and not self.copia_hecha
+        for boton, columna in ((self.b_buscar, 1), (self.b_elegir, 2)):
+            if mostrar_buscar:
+                boton.grid(row=0, column=columna)
+                boton.configure(state=estado_libre)
+            else:
+                boton.grid_remove()
+
         if self.ocupado:
             texto, estado = "TRABAJANDO…", "disabled"
         elif faltan is None:
@@ -165,6 +226,8 @@ class PaginaInstalacion:
 
     def _aplicar_estado(self, filas):
         self.filas = filas
+        if not self._faltan():
+            self.copia_hecha = False                   # si luego falta algo otra vez, BUSCAR vuelve a aparecer
         self._pintar_lista()
         self._pintar_botones()
 
@@ -178,9 +241,11 @@ class PaginaInstalacion:
         self._pintar_botones()
         self._mostrar_actual(None, "Preparando…")
 
-    def _terminar(self):
+    def _terminar(self, copia_ok=False):
         self.ocupado = False
         self._pulsando = False
+        if copia_ok:
+            self.copia_hecha = True
         self._mostrar_actual(0.0, "")
         self._pintar_botones()
         self.revisar()
@@ -195,16 +260,22 @@ class PaginaInstalacion:
                 self._log(f"No se pudo revisar: {error}")
         threading.Thread(target=trabajo, daemon=True, name="MILLER-Revisar").start()
 
+    def _copiar(self, pasos):
+        """Ejecuta solo las copias del plan. Devuelve True si todas quedaron verificadas."""
+        plan.ejecutar_plan(pasos, avisar=self._log, progreso_paso=self._cb_actual, progreso_total=self._cb_total)
+        return all(instalador.MODELOS[p["clave"]]["prueba"]() for p in pasos)
+
     def buscar(self):
-        """Busca en este equipo los modelos que faltan (sin descargar ni copiar nada)."""
+        """Busca en este equipo los modelos que faltan, con nombre exacto, y los copia a modelos/ (sin descargar)."""
         if self.ocupado or not self._faltan():
             return
         self._empezar()
 
         def trabajo():
+            copia_ok = False
             try:
-                pendientes = [c for c, m in instalador.MODELOS.items() if not m["prueba"]()]
-                self._log("Buscando modelos en este equipo: carpeta de MILLER, Escritorio, Documentos, Descargas…")
+                pendientes = self._pendientes()
+                self._log("Buscando en este equipo: carpeta de MILLER, Escritorio, Documentos, Descargas…")
                 hallados = plan.buscar_en_equipo(pendientes, progreso=self._cb_actual)
                 self._ui(lambda h=hallados: self._guardar_hallazgos(h))
                 for clave in pendientes:
@@ -213,27 +284,35 @@ class PaginaInstalacion:
                         self._log(f"Encontrado: {nombre} en {hallados[clave]}")
                     else:
                         self._log(f"No está en este equipo: {nombre}")
+                pasos = [p for p in plan.plan_instalacion(hallados, solo_copiar=True) if p["tipo"] == "copia"]
+                if pasos:
+                    copia_ok = self._copiar(pasos)
+                    self._log("Copia terminada y verificada." if copia_ok else "Hubo un problema al copiar: revise la bitácora.")
+                else:
+                    self._log("Nada que copiar: no se encontró ningún modelo que falte.")
             except Exception as error:
                 self._log(f"Error buscando: {error}")
             finally:
-                self._ui(self._terminar)
+                self._ui(lambda ok=copia_ok: self._terminar(ok))
         threading.Thread(target=trabajo, daemon=True, name="MILLER-Buscar").start()
 
     def instalar(self):
-        """Instala solo lo que falta: copia lo que se encontró en el equipo y descarga el resto."""
+        """Plan predefinido: 1) librerías si faltan, 2) buscar y copiar lo que haya en el equipo, 3) descargar el resto."""
         if self.ocupado or not self._faltan():
             return
         self._empezar()
 
         def trabajo():
             try:
-                pendientes = [c for c, m in instalador.MODELOS.items() if not m["prueba"]()]
+                pendientes = self._pendientes()
                 por_buscar = [c for c in pendientes if c not in self.encontrados]
                 if por_buscar:
                     hallados = plan.buscar_en_equipo(por_buscar, progreso=self._cb_actual)
                     self._ui(lambda h=hallados: self._guardar_hallazgos(h))
                 pasos = plan.plan_instalacion(dict(self.encontrados))
-                self._log(f"Plan: {len(pasos)} paso(s).")
+                self._log("Plan: " + " → ".join(
+                    f"{p['nombre']} ({'copiar' if p['tipo'] == 'copia' else 'descargar' if p['tipo'] == 'descarga' else 'pip'})"
+                    for p in pasos) if pasos else "Plan: nada que instalar.")
                 ok = plan.ejecutar_plan(pasos, avisar=self._log, progreso_paso=self._cb_actual,
                                         progreso_total=self._cb_total)
                 self._log("Instalación terminada. Reinicie MILLER para activar la voz." if ok
@@ -255,18 +334,18 @@ class PaginaInstalacion:
         self._empezar()
 
         def trabajo():
+            copia_ok = False
             try:
                 hallados = plan.encontrados_en_carpeta(carpeta)
                 self._ui(lambda h=hallados: self._guardar_hallazgos(h))
-                pasos = plan.plan_instalacion(hallados, solo_copiar=True)
+                pasos = [p for p in plan.plan_instalacion(hallados, solo_copiar=True) if p["tipo"] == "copia"]
                 self._log(f"Copiando desde {carpeta}: {len(pasos)} paso(s).")
                 if not pasos:
                     self._log("Esa carpeta no tiene modelos que falten aquí.")
                 else:
-                    plan.ejecutar_plan(pasos, avisar=self._log, progreso_paso=self._cb_actual,
-                                       progreso_total=self._cb_total)
+                    copia_ok = self._copiar(pasos)
             except Exception as error:
                 self._log(f"Error copiando modelos: {error}")
             finally:
-                self._ui(self._terminar)
+                self._ui(lambda ok=copia_ok: self._terminar(ok))
         threading.Thread(target=trabajo, daemon=True, name="MILLER-Copiar").start()

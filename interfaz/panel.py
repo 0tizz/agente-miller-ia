@@ -280,12 +280,15 @@ class PanelInteraccion:
         self._ajustar_scroll_llaves()
 
     def _rueda_llaves(self, evento, paso=None):
-        """Rueda del ratón (o botones 4 y 5 en Linux): solo desplaza cuando la página MILLER está abierta."""
-        if self.actual != "llaves":
+        """Rueda del ratón (o botones 4 y 5 en Linux): desplaza la página abierta si tiene zona con desplazamiento."""
+        if self.actual not in ("llaves", "instalacion"):
             return
         if paso is None:
             paso = -1 if evento.delta > 0 else 1
-        self.lienzo_llaves.yview_scroll(paso, "units")
+        if self.actual == "llaves":
+            self.lienzo_llaves.yview_scroll(paso, "units")
+        else:
+            self.inst.desplazar(paso)
 
     def alternar(self, clave):
         """Un clic abre la página; otro clic en el mismo botón la cierra (solo quedan los botones)."""

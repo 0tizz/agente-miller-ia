@@ -10,12 +10,13 @@ INSTALAR
        modelos/voz/vosk-model-small-es-0.42      (reconocimiento de voz)
        modelos/ffmpeg-master-gpl/bin/ffmpeg.exe  (reparar, medir y descargar música)
        modelos/voces/es_ES-davefx-medium/        (voz masculina española)
-     La pestaña INSTALACIÓN de la ventana hace lo mismo, con barra de descarga y
-     barra total. Verde = instalado, rojo = falta.
-     Si ya tiene esos modelos en este equipo (en otra carpeta o en otra copia de
-     MILLER), pulse "BUSCAR EN ESTE EQUIPO": MILLER busca el nombre exacto, muestra
-     la ruta encontrada y copia el archivo a su carpeta modelos/ sin volver a bajarlo.
-     Para una carpeta concreta, use "ELEGIR CARPETA…".
+     La pestaña INSTALACIÓN de la ventana hace lo mismo. Verde = instalado, rojo = falta.
+     Botones (abajo, con la barra de progreso encima):
+       COMPROBAR ESTADO      vuelve a mirar qué falta.
+       BUSCAR EN ESTE EQUIPO busca los modelos por nombre exacto y los copia a modelos/.
+                             Si copia bien, el botón desaparece.
+       ELEGIR CARPETA…       igual, pero desde una carpeta que usted escoja.
+       INSTALAR LO QUE FALTA solo se activa si falta algo; descarga lo que no esté en el equipo.
   4. Comprobar:  python utilidades/entorno.py
   5. Música: ponga sus canciones en audios/ (no se incluyen en el repositorio).
   6. La llave PRO no viene en el repositorio: cada equipo la pone con su propia llave.
