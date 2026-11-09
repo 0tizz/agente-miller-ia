@@ -7,8 +7,9 @@ build/
 __pycache__/
 *.pyc
 
-# Caché de graphify (regenerable)
-graphify-out/cache/
+# Herramientas de desarrollo y sus salidas (no son parte del programa)
+graphify-out/
+instalar_graphify.bat
 
 # Modelos, voces y ffmpeg: son descargables y pesan demasiado para git.
 # Se bajan con:  python principal.py --instalar   (utilidades/instalador.py, solo desde URLs fijas)
